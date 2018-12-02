@@ -21,6 +21,11 @@ function toStrTuple(x::AbstractString; ends = "</w>")
     Tuple(fs)
 end
 
+"set the default end symbol"
+function set_endsym(sym::String)
+    @eval toStrTuple(str::AbstractString) = toStrTuple(str; ends=$sym)
+end
+
 "find adjacent characters. return a list of Pair"
 function bi_pairs(str::AbstractString)
     bi_pairs(toStrTuple(str,; ends=""))
