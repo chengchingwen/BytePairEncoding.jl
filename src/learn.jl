@@ -59,7 +59,7 @@ function learn!(bper::BPELearner)
 end
 
 function emit(bper::BPELearner, ofile::AbstractString; comment::String = "")
-    open(ofile, :w) do fo
+    open(ofile, "w+") do fo
         write(fo, ":$comment#endsym:$(bper.endsym)\n")
         for (f, s) ∈ bper.result
             write(fo, f, " ", s, "\n")
