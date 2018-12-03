@@ -10,5 +10,16 @@
             @test lr == res
         end
     end
+
+    bpefile = joinpath(dirname(@__FILE__), "data/bpe.out")
+    emit(bper, bpefile)
+
+    open(bpefile) do bf
+        _h = readline(bf)
+        for (i, line) ∈ enumerate(eachline(bf))
+            pair = Pair(split(line, " ")...)
+            @test pair == bper.result[i]
+        end
+    end
 end
 
