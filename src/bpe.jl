@@ -46,7 +46,6 @@ end
 segment(bpe::Bpe, sentence::AbstractString)::Vector{String} =
     segment_token(bpe, intern.(tokenize(sentence)))
 
-#mapreduce(x->segment_token(bpe, x), vcat, tokens)
 "bpe tokens"
 segment_token(bpe::Bpe, tokens::Vector{String}) =
     mapreduce(x->segment_token(bpe, x),

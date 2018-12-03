@@ -2,7 +2,7 @@ using WordTokenizers
 using InternedStrings
 
 "simply the built-in split function for the origin tokenize method in subword-nmt"
-whitespace_tokenizer(str::AbstractString) = split(str)
+whitespace_tokenize(str::AbstractString) = split(str)
 
 "get vocab with frequency counts"
 function get_vocab(vfile::AbstractString)
