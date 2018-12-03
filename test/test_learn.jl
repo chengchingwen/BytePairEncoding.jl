@@ -12,7 +12,7 @@
     end
 
     bpefile = joinpath(dirname(@__FILE__), "data/bpe.out")
-    emit(bper, bpefile)
+    emit(bper, bpefile; comment = "this is for testing...")
 
     open(bpefile) do bf
         _h = readline(bf)

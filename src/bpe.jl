@@ -75,6 +75,7 @@ function (bpe::Bpe)(x::String)
     bpe.cache[x] = xtp
 end
 
+"find pair with lowest rank"
 lowestpair(bpe::Bpe, xps) = argmin(
     sizehint!(Dict(
         map(xps) do p

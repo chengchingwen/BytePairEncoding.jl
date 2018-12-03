@@ -10,6 +10,7 @@ function _regex_escape(s::AbstractString)
     replace(res, "\0" => "\\0")
 end
 
+"get vocab with frequency counts"
 function get_vocab(vfile::AbstractString)
     vocab = Dict{String, Int}()
     open(vfile) do io
@@ -39,12 +40,14 @@ struct BPELearner
     end
 end
 
+"add a new file to learner"
 function add!(bper::BPELearner, vfile::String)
     push!(bper.vfiles, vfile)
     nv = get_vocab(vfile)
     update!(bper.stats, nv)
 end
 
+"learn a BPE map"
 function learn!(bper::BPELearner)
     if isassigned(bper.result)
         bper.result = Vector(undef, bper.num_sym)
@@ -58,7 +61,9 @@ function learn!(bper::BPELearner)
     end
 end
 
+"emit the BPE map to ofile; can add one-line comment to the header(first line)"
 function emit(bper::BPELearner, ofile::AbstractString; comment::String = "")
+    @assert '\n' ∉ comment && '\r' ∉ comment
     open(ofile, "w+") do fo
         write(fo, ":$comment#endsym:$(bper.endsym)\n")
         for (f, s) ∈ bper.result
