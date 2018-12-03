@@ -66,3 +66,8 @@ function emit(bper::BPELearner, ofile::AbstractString; comment::String = "")
     end
     ofile
 end
+
+function Base.show(io::IO, b::BPELearner)
+    println(io, "BPELearner(num_sym=$(b.num_sym), min_freq=$(b.min_freq), endsym=\"$(b.endsym)\")")
+    io
+end
