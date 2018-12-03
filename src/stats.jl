@@ -103,7 +103,7 @@ end
 "update Statistic of the new merged pair"
 function update!(stats::Statistic, index::Int, nwtp::Tuple, mps::Vector)
     for mp ∈ mps
-        stats.pair_freq[mp] = get(stats.pair_freq, mp, 0) + stats.vocab[nwtp]
+        stats.pair_freq[mp] = get_freq(stats, mp) + stats.vocab[nwtp]
         indices = get!(stats.pair_index, mp, Int[])
         push!(indices, index)
     end
@@ -123,7 +123,7 @@ end
 function update!(stats::Statistic, index::Int, nwtp::Tuple)
     nbps = bi_pairs(nwtp)
     for np ∈ nbps
-        stats.pair_freq[np] = get(stats.pair_freq, np, 0) + stats.vocab[nwtp]
+        stats.pair_freq[np] = get_freq(stats, np) + stats.vocab[nwtp]
         indices = get!(stats.pair_index, np, Int[])
         push!(indices, index)
     end
@@ -140,7 +140,7 @@ function update!(stats::Statistic, str::String; freq::Int = 1)
             stats.pair_freq[sbp] += freq
         end
     else
-        stats.vocab[stp] = get(stats.vocab, stp, 0) + freq
+        stats.vocab[stp] = get_freq(stats.vocab, stp) + freq
         push!(stats.vkeys, stp)
         update!(stats, length(stats.vkeys), stp)
     end

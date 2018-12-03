@@ -11,7 +11,7 @@ struct Bpe
         cache = Dict{String, Tuple}()
         _oldsym = open(bfile) do io
             header = readline(io)
-            esi = findfirst(isequal("#endsym:"), header)
+            esi = findlast(isequal("#endsym:"), header)
             if esi !== nothing
                 _oldsym = header[last(esi)+1:end]
             else
@@ -65,7 +65,6 @@ function (bpe::Bpe)(x::String)
 
     isempty(xps) && return xtp
     while true
-     #   @show xtp
         mp = lowestpair(bpe, xps)
         !haskey(bpe.rank, mp) && break
 
