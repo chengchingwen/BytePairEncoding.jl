@@ -32,7 +32,6 @@ struct Bpe
     end
 end
 
-
 "process a line, remain leading & trailing whitespace"
 function process_line(bpe::Bpe, line)
     pat = r"(\S.*\S)"
@@ -60,18 +59,15 @@ segment_token(bpe::Bpe, tokens::Vector{String}) =
 "add seperator and end symbol"
 _add_se_sym(bt, i, x, rp, ss)::String = intern(i == length(bt) ? replace(x, rp) : (x * ss))
 
-# "bpe a token and add seperator"
-# segment_token(bpe::Bpe, token::String) = segment_token(bpe, bpe(token))
-
 "bpe a token and add seperator"
 function segment_token(bpe::Bpe, token::String)
     isempty(bpe.glossaries) && return segment_token(bpe, bpe(token))
-    mapreduce(x->segment_token(bpe, bpe(x)),
+    segment_token(bpe, Tuple(mapreduce(x-> bpe(x),
               (init, x)-> (foreach(x) do y
                            push!(init, y)
                            end;
                            init),
-              isolate_gloss(token, bpe.glossaries); init=Vector{String}())
+              isolate_gloss(token, bpe.glossaries); init=Vector{String}())))
 end
 
 function segment_token(bpe::Bpe, ttp::Tuple)
@@ -82,10 +78,15 @@ function segment_token(bpe::Bpe, ttp::Tuple)
     end::Vector{String}
 end
 
-
 "byte pair encode a word"
 function (bpe::Bpe)(x::String)::Tuple
     haskey(bpe.cache, x) && return bpe.cache[x]
+
+    for gloss ∈ bpe.glossaries
+        if occursin(Regex("^"*gloss.pattern*"\$"), x)
+            return bpe.cache[x] = tuple(x)
+        end
+    end
 
     xtp = toStrTuple(x)
     xps = bi_pairs(xtp)

@@ -1,7 +1,7 @@
 "regex escape from https://github.com/JuliaLang/julia/pull/29643"
 function _regex_escape(s::AbstractString)
     res = replace(s, r"([()[\]{}?*+\-|^\$\\.&~#\s=!<>|:])" => s"\\\1")
-    replace(res, "\0" => "\\0")
+    Regex(replace(res, "\0" => "\\0"))
 end
 
 "isolate given glossary in a word"
@@ -22,7 +22,16 @@ function isolate_gloss(word::String, gloss::Regex)
     res
 end
 
-function isolate_gloss(word::String, glosses::Vector{Union{Regex, String}})
+isolate_gloss(word::String, glosses::Vector{Union{Regex, String}}) =
+    isolate_gloss(word,
+                  map(x->typeof(x)===String ? _regex_escape(x) : x,
+                      glosses)
+                  )
+
+isolate_gloss(word::String, glosses::Vector{String}) =
+    isolate_gloss(word, map(_regex_escape, glosses))
+
+function isolate_gloss(word::String, glosses::Vector{Regex})
     word = String[word]
     for gloss ∈ glosses
         len = length(word)

@@ -15,6 +15,7 @@ most_freq(stats::Statistic) = sort(collect(stats.pair_freq); alg=PartialQuickSor
 tests = [
     "learn",
     "bpe",
+    "glossary",
 ]
 
 @testset "BPE" begin
