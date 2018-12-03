@@ -25,15 +25,17 @@ end
 struct BPELearner
     num_sym::Int
     min_freq::Int
+    endsym::String
     vfiles::Vector{String}
 
     stats::Statistic
     result::Vector{Pair{String, String}}
 
-    function BPELearner(vfiles::Vector{String}, num_sym::Int; min_freq::Int = 2)
+    function BPELearner(vfiles::Vector{String}, num_sym::Int; min_freq::Int = 2, endsym::String = "</w>")
         vocab = mapreduce(get_vocab, merge!, vfiles)
         stats = Statistic(vocab)
-        new(num_sym, min_freq, vfiles, stats, Vector{Pair{String, String}}(undef, num_sym))
+        endsym != "</w>" && set_endsym(endsym)
+        new(num_sym, min_freq, endsym, vfiles, stats, Vector{Pair{String, String}}(undef, num_sym))
     end
 end
 
@@ -56,3 +58,12 @@ function learn!(bper::BPELearner)
     end
 end
 
+function emit(bper::BPELearner, ofile::AbstractString; comment::String = "")
+    open(ofile, :w) do fo
+        write(fo, ":$comment#endsym:$(bper.endsym)\n")
+        for (f, s) ∈ bper.result
+            write(fo, f, " ", s, "\n")
+        end
+    end
+    ofile
+end
