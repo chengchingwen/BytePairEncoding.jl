@@ -27,18 +27,18 @@ function set_endsym(sym::String)
 end
 
 "find adjacent characters. return a list of Pair"
-function bi_pairs(str::AbstractString)
+function bi_pairs(str::AbstractString)::Vector{Pair{String, String}}
     bi_pairs(toStrTuple(str,; ends=""))
 end
 
 "find adjacent element. return a list of Pair"
-function bi_pairs(stp)
+function bi_pairs(stp)::Vector{Pair{String, String}}
     init, rstp = Iterators.peel(stp)
     map((x)->x[1]=>x[2], zip(stp, rstp))
 end
 
 "if only length one, return []"
-bi_pairs(stp::Tuple{String}) = Pair{String, String}[]
+bi_pairs(stp::Tuple{String}) = Vector{Pair{String, String}}()
 
 struct Statistic
     vocab::Dict{Tuple, Int}

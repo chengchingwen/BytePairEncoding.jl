@@ -5,6 +5,7 @@ struct Bpe
     endsym::String
     sepsym::String
     cache::Dict{String, Tuple}
+    # glossaries::Vector{Union{Regex,String}}
     function Bpe(bfile::AbstractString;
                  merge::Int = -1, sepsym::String = "", endsym::String = "</w>")
         rank = Dict{Pair{String,String}, Int}()
@@ -45,24 +46,30 @@ segment(bpe::Bpe, sentence::AbstractString)::Vector{String} =
     segment_token(bpe, intern.(tokenize(sentence)))
 
 "bpe tokens"
-segment_token(bpe::Bpe, tokens::Vector{String})::Vector{String} =
-    mapreduce(x->segment_token(bpe, x), vcat, tokens)::Vector{String}
+segment_token(bpe::Bpe, tokens::Vector{String}) =
+    mapreduce(x->segment_token(bpe, x), vcat, tokens)
+
+"add seperator and end symbol"
+_add_se_sym(bt, i, x, rp, ss)::String = intern(i == length(bt) ? replace(x, rp) : (x * ss))
 
 "bpe a token and add seperator"
-function segment_token(bpe::Bpe, token::String)::Vector{String}
-    bt = bpe(token)
-    map(enumerate(bt)) do (i, x)
-        intern(i == length(bt) ? replace(x, bpe._oldsym=>bpe.endsym) : (x * bpe.sepsym))
-    end
+segment_token(bpe::Bpe, token::String) = segment_token(bpe, bpe(token))
+
+function segment_token(bpe::Bpe, ttp::Tuple)
+    rp = bpe._oldsym=>bpe.endsym
+    ss = bpe.sepsym
+    map(enumerate(ttp)) do (i, x)
+        _add_se_sym(ttp, i, x, rp, ss)
+    end::Vector{String}
 end
 
+
 "byte pair encode a word"
-function (bpe::Bpe)(x::String)
+function (bpe::Bpe)(x::String)::Tuple
     haskey(bpe.cache, x) && return bpe.cache[x]
 
     xtp = toStrTuple(x)
     xps = bi_pairs(xtp)
-
     isempty(xps) && return xtp
     while true
         mp = lowestpair(bpe, xps)
