@@ -4,12 +4,6 @@ using InternedStrings
 "simply the built-in split function for the origin tokenize method in subword-nmt"
 whitespace_tokenizer(str::AbstractString) = split(str)
 
-"regex escape from https://github.com/JuliaLang/julia/pull/29643"
-function _regex_escape(s::AbstractString)
-    res = replace(s, r"([()[\]{}?*+\-|^\$\\.&~#\s=!<>|:])" => s"\\\1")
-    replace(res, "\0" => "\\0")
-end
-
 "get vocab with frequency counts"
 function get_vocab(vfile::AbstractString)
     vocab = Dict{String, Int}()

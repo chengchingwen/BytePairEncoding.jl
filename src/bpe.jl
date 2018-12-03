@@ -5,8 +5,9 @@ struct Bpe
     endsym::String
     sepsym::String
     cache::Dict{String, Tuple}
-    # glossaries::Vector{Union{Regex,String}}
+    glossaries::Vector{Union{Regex,String}}
     function Bpe(bfile::AbstractString;
+                 glossaries = Vector{Union{Regex, String}}(),
                  merge::Int = -1, sepsym::String = "", endsym::String = "</w>")
         rank = Dict{Pair{String,String}, Int}()
         cache = Dict{String, Tuple}()
@@ -27,9 +28,10 @@ struct Bpe
             end
             _oldsym
         end
-        new(rank, merge, _oldsym, endsym, sepsym, cache)
+        new(rank, merge, _oldsym, endsym, sepsym, cache, glossaries)
     end
 end
+
 
 "process a line, remain leading & trailing whitespace"
 function process_line(bpe::Bpe, line)
@@ -45,15 +47,32 @@ end
 segment(bpe::Bpe, sentence::AbstractString)::Vector{String} =
     segment_token(bpe, intern.(tokenize(sentence)))
 
+#mapreduce(x->segment_token(bpe, x), vcat, tokens)
 "bpe tokens"
 segment_token(bpe::Bpe, tokens::Vector{String}) =
-    mapreduce(x->segment_token(bpe, x), vcat, tokens)
+    mapreduce(x->segment_token(bpe, x),
+              (init, x)-> (foreach(x) do y
+                           push!(init, y)
+                           end;
+                           init),
+              tokens; init=Vector{String}())
 
 "add seperator and end symbol"
 _add_se_sym(bt, i, x, rp, ss)::String = intern(i == length(bt) ? replace(x, rp) : (x * ss))
 
+# "bpe a token and add seperator"
+# segment_token(bpe::Bpe, token::String) = segment_token(bpe, bpe(token))
+
 "bpe a token and add seperator"
-segment_token(bpe::Bpe, token::String) = segment_token(bpe, bpe(token))
+function segment_token(bpe::Bpe, token::String)
+    isempty(bpe.glossaries) && return segment_token(bpe, bpe(token))
+    mapreduce(x->segment_token(bpe, bpe(x)),
+              (init, x)-> (foreach(x) do y
+                           push!(init, y)
+                           end;
+                           init),
+              isolate_gloss(token, bpe.glossaries); init=Vector{String}())
+end
 
 function segment_token(bpe::Bpe, ttp::Tuple)
     rp = bpe._oldsym=>bpe.endsym
