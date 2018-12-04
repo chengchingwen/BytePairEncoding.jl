@@ -10,7 +10,8 @@ and then Learn the BPE map with it.
   + work as the learning configure.
     - =num_sym=: how many pair to generate.
     - =min_freq=: threshold of learned pair frequency.
-    - =endsym=: the symbol for seperate internal & last pair.
+    - =endsym=: the symbol for seperate internal & last pair, if is set, it will automatically 
+                invoke =set_endsym(endsym=.
   + =add!(::BPELearner, newfile)=
     + add a new file to learner.
   + =learn!(::BPELearner)=
@@ -28,6 +29,7 @@ and then Learn the BPE map with it.
   + =segment_token(::Bpe, token::String)=: segment a given token or a list of tokens.
 + =set_endsym(::String)=: set the end symbol, default "</w>".
 + =set_tokenizer(func)=: set the tokenizer fucntion , default is =nltk_word_tokenize=.
++ =whitespace_tokenize(str)=: simply the =split(str)= function, for use with =set_tokenizer=.
 * Examples
 
 #+BEGIN_SRC julia
@@ -150,3 +152,9 @@ w> the</w> im por t ant</w> comm un ic ations</w> you</w> w ish</w> to</w> recei
 
 julia> 
 #+END_SRC
+* Roadmap
++ add more interface and function
++ add pre-learned bpe map
++ support for different bpe format 
++ support for google [[https://github.com/google/sentencepiece][sentencepiece]]
++ Maybe add to [[https://github.com/JuliaText/Embeddings.jl][Embeddings.jl]] with [[https://github.com/bheinzerling/bpemb][bpemb]]: pre-train bpe embedding
