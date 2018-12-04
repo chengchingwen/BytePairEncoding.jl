@@ -27,7 +27,7 @@
         #mocking bpe
         bpefile = joinpath(dirname(@__FILE__), "data/bpe.out")
         bpe = Bpe(bpefile; sepsym="@@", endsym="", glossaries = glossaries)
-        import BPE: Bpe
+        import BytePairEncoding: Bpe
         function (b::Bpe)(x::String)::Tuple
             if x ∈ b.glossaries
                 tuple(x)

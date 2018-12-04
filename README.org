@@ -1,7 +1,7 @@
-* BPE.jl
+* BytePairEncoding.jl
 Pure Julia implementation of  the Byte Pair Encoding(BPE) method 
 in the [[https://arxiv.org/abs/1508.07909][subword neural machine translation paper]]. It's a port of 
-the original python package [[https://github.com/rsennrich/subword-nmt][subword-nmt]]. =BPE.jl= support different tokenize
+the original python package [[https://github.com/rsennrich/subword-nmt][subword-nmt]]. =BytePairEncoding.jl= support different tokenize
 method(with the help of WordTokenizers.jl). You can simply use =set_tokenizer([your tokenize function])= 
 and then Learn the BPE map with it.
 
@@ -42,7 +42,7 @@ and then Learn the BPE map with it.
  _/ |\__'_|_|_|\__'_|  |
 |__/                   |
 
-julia> using BPE
+julia> using BytePairEncoding
 
 julia> using WordTokenizers
 

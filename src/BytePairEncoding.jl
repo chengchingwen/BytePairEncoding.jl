@@ -1,4 +1,4 @@
-module BPE
+module BytePairEncoding
 
 using WordTokenizers
 using InternedStrings
