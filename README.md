@@ -1,13 +1,14 @@
 
 # Table of Contents
 
-1.  [BytePairEncoding.jl](#orgc10a177)
-2.  [API](#orgb09428c)
-3.  [Examples](#org1cda69f)
-4.  [Roadmap](#org9e61584)
+1.  [BytePairEncoding.jl](#orgf71fdec)
+2.  [API](#org57e4c00)
+    1.  [Unicode Normalization](#orga334417)
+3.  [Examples](#org6777a55)
+4.  [Roadmap](#orgd74ca5a)
 
 
-<a id="orgc10a177"></a>
+<a id="orgf71fdec"></a>
 
 # BytePairEncoding.jl
 
@@ -18,29 +19,34 @@ method(with the help of WordTokenizers.jl). You can simply use `set_tokenizer([y
 and then Learn the BPE map with it.
 
 
-<a id="orgb09428c"></a>
+<a id="org57e4c00"></a>
 
 # API
 
--   `BPELearner([vocabulary files]; num_sym, min_freq, endsym)` 
+-   `BPELearner([vocabulary files]; num_sym, min_freq, endsym, normalizer)` 
     -   work as the learning configure.
         -   `num_sym`: how many pair to generate.
         -   `min_freq`: threshold of learned pair frequency.
         -   `endsym`: the symbol for seperate internal & last pair, if is set, it will automatically 
             invoke `set_endsym(endsym`.
+        -   `normalizer`: normalizer type, default is identity(not normalized), 
+            see next section for define normalization
     -   `add!(::BPELearner, newfile)`
         -   add a new file to learner.
     -   `learn!(::BPELearner)`
         -   learn the bpe map.
     -   `emit(::BPELearner, output_filename)`
         -   generate the bpe map file.
--   `Bpe(bpefile; glossaries, merge, sepsym, endsym)`
+-   `Bpe(bpefile; glossaries, merge, sepsym, endsym, normalizer)`
     -   the bpe encoding related config.
         -   `merge`: how many pair to load.
         -   `sepsym`: seperator symbol for internal pair, default is "".
         -   `endsym`: end symbol of the last pair, default "</w>".
         -   `glossaries`: a list of glossaries, support both Regex & String.
-    -   `process_line(::Bpe, line)`: segment a given line the join as a new line, leading & trailing whitesplace will remmain.
+        -   `normalizer`: normalizer type,  default is identity(not normalized), 
+            see next section for define normalization
+    -   `process_line(::Bpe, line)`: segment a given line the join as a new line, 
+        leading & trailing whitesplace will remmain.
     -   `segment(::Bpe, line)`: segment a line into a list of segments
     -   `segment_token(::Bpe, token::String)`: segment a given token or a list of tokens.
 -   `set_endsym(::String)`: set the end symbol, default "</w>".
@@ -48,7 +54,22 @@ and then Learn the BPE map with it.
 -   `whitespace_tokenize(str)`: simply the `split(str)` function, for use with `set_tokenizer`.
 
 
-<a id="org1cda69f"></a>
+<a id="orga334417"></a>
+
+## Unicode Normalization
+
+support unicode normalization
+
+-   `UtfNormalizer`
+    -   wrapper type on Julia built-in unicode normalization function
+        -   `UtfNormalizer(::Symbol)`: support `:NFC`, `:NFD`, `:NFKC`, `:NFKD`, `:NFKC_CF`
+        -   `UtfNormalizer([option_names=all_default_false])`: options (stable, compat, 
+            compose, decompose, stripignore, rejectna, newline2ls, newline2ps, newline2lf, 
+            stripcc, casefold, lump, stripmark), usage example: `UtfNormalizer(stable=true, compose=true)`
+    -   `normalize(::AbstractNormalizer, ::String)`: normalize given string with specific normalizer.
+
+
+<a id="org6777a55"></a>
 
 # Examples
 
@@ -68,18 +89,21 @@ and then Learn the BPE map with it.
     julia> set_tokenizer(nltk_word_tokenize)
     tokenize (generic function with 1 method)
     
+    julia> norm = UtfNormalizer(:NFKC)
+    UtfNormalizer(14)
+    
     julia> vocabfiles = ["./data/.....", "./another/data/....." ...]
     
-    julia> bper = BPELearner(vocabfiles, 1000)
-    BPELearner(num_sym=1000, min_freq=2, endsym="</w>")
+    julia> bper = BPELearner(vocabfiles, 1000; normalizer=norm)
+    BPELearner(num_sym=1000, min_freq=2, endsym="</w>", normailzer=UtfNormalizer)
     
     julia> learn!(bper)
     
     julia> emit(bper, "./bpe.out")
     "./bpe.out"
     
-    julia> bpe = Bpe("./bpe.out")
-    Bpe(merge=-1, sepsym="", endsym="</w>", num_glossaries=0)
+    julia> bpe = Bpe("./bpe.out"; normalizer=norm)
+    Bpe(merge=-1, sepsym="", endsym="</w>", num_glossaries=0, normalizer=UtfNormalizer)
     
     julia> sample_sent =  "It's interesting that technology often works as a servant for us, yet frequently we become a
      servant to it. E-mail is a useful tool but many feel controlled by this new tool. The average business person is g
@@ -172,13 +196,14 @@ and then Learn the BPE map with it.
     julia> 
 
 
-<a id="org9e61584"></a>
+<a id="orgd74ca5a"></a>
 
 # Roadmap
 
 -   add more interface and function
 -   add pre-learned bpe map
 -   support for different bpe format
+-   support custom normalization
 -   support for google [sentencepiece](https://github.com/google/sentencepiece)
 -   Maybe add to [Embeddings.jl](https://github.com/JuliaText/Embeddings.jl) with [bpemb](https://github.com/bheinzerling/bpemb): pre-train bpe embedding
 
