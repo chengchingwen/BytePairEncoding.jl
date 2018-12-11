@@ -16,6 +16,7 @@ tests = [
     "learn",
     "bpe",
     "glossary",
+    "utfnorm",
 ]
 
 @testset "BytePairEncoding" begin
