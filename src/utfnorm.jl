@@ -46,7 +46,7 @@ _compute_options(nf::Symbol) =
     nf == :NFKC ? (UTF8PROC_STABLE | UTF8PROC_COMPOSE | UTF8PROC_COMPAT) :
     nf == :NFKD ? (UTF8PROC_STABLE | UTF8PROC_DECOMPOSE | UTF8PROC_COMPAT) :
     nf == :NFKC_CF ? (UTF8PROC_STABLE | UTF8PROC_COMPOSE | UTF8PROC_COMPAT | UTF8PROC_CASEFOLD) :
-    throw(ArgumentError(":$nf is not one of :NFC, :NFD, :NFKC, :NFKD, NFKC_CF"))
+    throw(ArgumentError(":$nf is not one of :NFC, :NFD, :NFKC, :NFKD, :NFKC_CF"))
 
 
 #normalize(s::AbstractString, nf::Symbol) = utf8proc_map(s, _compute_options(nf))

@@ -6,9 +6,13 @@ struct Bpe
     sepsym::String
     cache::Dict{String, Tuple}
     glossaries::Vector{Union{Regex,String}}
+
+    normalizer::AbstractNormalizer
+
     function Bpe(bfile::AbstractString;
                  glossaries = Vector{Union{Regex, String}}(),
-                 merge::Int = -1, sepsym::String = "", endsym::String = "</w>")
+                 merge::Int = -1, sepsym::String = "", endsym::String = "</w>",
+                 normalizer=UnNormalizer())
         rank = Dict{Pair{String,String}, Int}()
         cache = Dict{String, Tuple}()
         _oldsym = open(bfile) do io
@@ -28,7 +32,8 @@ struct Bpe
             end
             _oldsym
         end
-        new(rank, merge, _oldsym, endsym, sepsym, cache, glossaries)
+        new(rank, merge, _oldsym, endsym, sepsym, cache, glossaries,
+            normalizer)
     end
 end
 
@@ -44,7 +49,7 @@ end
 
 "segment a given sentence"
 segment(bpe::Bpe, sentence::AbstractString)::Vector{String} =
-    segment_token(bpe, intern.(tokenize(sentence)))
+    segment_token(bpe, intern.(tokenize(normalize(bpe.normalizer, sentence))))
 
 "bpe tokens"
 segment_token(bpe::Bpe, tokens::Vector{String}) =

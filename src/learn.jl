@@ -5,10 +5,11 @@ using InternedStrings
 whitespace_tokenize(str::AbstractString) = split(str)
 
 "get vocab with frequency counts"
-function get_vocab(vfile::AbstractString)
+function get_vocab(vfile::AbstractString; normalizer)
     vocab = Dict{String, Int}()
     open(vfile) do io
         for line ∈ eachline(io)
+            line = normalize(normalizer, line)
             for word ∈ intern.(tokenize(line))
                 vocab[word] = get(vocab, word, 0) + 1
             end
@@ -26,18 +27,25 @@ struct BPELearner
     stats::Statistic
     result::Vector{Pair{String, String}}
 
-    function BPELearner(vfiles::Vector{String}, num_sym::Int; min_freq::Int = 2, endsym::String = "</w>")
-        vocab = mapreduce(get_vocab, merge!, vfiles)
+    normalizer::AbstractNormalizer
+
+    function BPELearner(vfiles::Vector{String}, num_sym::Int;
+                        min_freq::Int = 2, endsym::String = "</w>",
+                        normalizer=UnNormalizer())
+        vocab = mapreduce((f)->get_vocab(f; normalizer=normalizer), merge!, vfiles)
         stats = Statistic(vocab)
         endsym != "</w>" && set_endsym(endsym)
-        new(num_sym, min_freq, endsym, vfiles, stats, Vector{Pair{String, String}}(undef, num_sym))
+        new(num_sym, min_freq, endsym, vfiles,
+            stats,
+            Vector{Pair{String, String}}(undef, num_sym),
+            normalizer)
     end
 end
 
 "add a new file to learner"
 function add!(bper::BPELearner, vfile::String)
     push!(bper.vfiles, vfile)
-    nv = get_vocab(vfile)
+    nv = get_vocab(vfile; normalizer=bper.normalizer)
     update!(bper.stats, nv)
 end
 
