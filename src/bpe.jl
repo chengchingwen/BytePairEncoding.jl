@@ -116,6 +116,8 @@ lowestpair(bpe::Bpe, xps) = argmin(
 )
 
 function Base.show(io::IO, b::Bpe)
-    println(io, "Bpe(merge=$(b.merge), sepsym=\"$(b.sepsym)\", endsym=\"$(b.endsym)\", num_glossaries=$(length(b.glossaries)))")
+    println(io, "Bpe(merge=$(b.merge), sepsym=\"$(b.sepsym)\", ",
+            "endsym=\"$(b.endsym)\", num_glossaries=$(length(b.glossaries)), ",
+            "normalizer=$(typeof(b.normalizer)))")
     io
 end
