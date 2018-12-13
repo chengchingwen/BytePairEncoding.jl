@@ -1,14 +1,14 @@
 
 # Table of Contents
 
-1.  [BytePairEncoding.jl](#orgf71fdec)
-2.  [API](#org57e4c00)
-    1.  [Unicode Normalization](#orga334417)
-3.  [Examples](#org6777a55)
-4.  [Roadmap](#orgd74ca5a)
+1.  [BytePairEncoding.jl](#orga6ba865)
+2.  [API](#org3bc249a)
+    1.  [Unicode Normalization](#orgf84a864)
+3.  [Examples](#orga7c7a03)
+4.  [Roadmap](#orgecfe740)
 
 
-<a id="orgf71fdec"></a>
+<a id="orga6ba865"></a>
 
 # BytePairEncoding.jl
 
@@ -19,7 +19,7 @@ method(with the help of WordTokenizers.jl). You can simply use `set_tokenizer([y
 and then Learn the BPE map with it.
 
 
-<a id="org57e4c00"></a>
+<a id="org3bc249a"></a>
 
 # API
 
@@ -40,8 +40,9 @@ and then Learn the BPE map with it.
 -   `Bpe(bpefile; glossaries, merge, sepsym, endsym, normalizer)`
     -   the bpe encoding related config.
         -   `merge`: how many pair to load.
-        -   `sepsym`: seperator symbol for internal pair, default is "".
-        -   `endsym`: end symbol of the last pair, default "</w>".
+        -   `sepsym`: seperator symbol for internal pair, default is `""`.
+        -   `endsym`: end symbol of the last pair, default `"</w>"`.
+        -   `have_header`: skip first line? default `true`
         -   `glossaries`: a list of glossaries, support both Regex & String.
         -   `normalizer`: normalizer type,  default is identity(not normalized), 
             see next section for define normalization
@@ -49,12 +50,12 @@ and then Learn the BPE map with it.
         leading & trailing whitesplace will remmain.
     -   `segment(::Bpe, line)`: segment a line into a list of segments
     -   `segment_token(::Bpe, token::String)`: segment a given token or a list of tokens.
--   `set_endsym(::String)`: set the end symbol, default "</w>".
+-   `set_endsym(::String)`: set the end symbol, default `"</w>"`.
 -   `set_tokenizer(func)`: set the tokenizer fucntion , default is `nltk_word_tokenize`.
 -   `whitespace_tokenize(str)`: simply the `split(str)` function, for use with `set_tokenizer`.
 
 
-<a id="orga334417"></a>
+<a id="orgf84a864"></a>
 
 ## Unicode Normalization
 
@@ -69,7 +70,7 @@ support unicode normalization
     -   `normalize(::AbstractNormalizer, ::String)`: normalize given string with specific normalizer.
 
 
-<a id="org6777a55"></a>
+<a id="orga7c7a03"></a>
 
 # Examples
 
@@ -196,7 +197,7 @@ support unicode normalization
     julia> 
 
 
-<a id="orgd74ca5a"></a>
+<a id="orgecfe740"></a>
 
 # Roadmap
 
