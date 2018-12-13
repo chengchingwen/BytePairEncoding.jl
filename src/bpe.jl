@@ -12,12 +12,18 @@ struct Bpe
     function Bpe(bfile::AbstractString;
                  glossaries = Vector{Union{Regex, String}}(),
                  merge::Int = -1, sepsym::String = "", endsym::String = "</w>",
+                 have_header::Bool=true,
                  normalizer=UnNormalizer())
         rank = Dict{Pair{String,String}, Int}()
         cache = Dict{String, Tuple}()
         _oldsym = open(bfile) do io
-            header = readline(io)
-            esi = findlast(isequal("#endsym:"), header)
+            if have_header
+                header = readline(io)
+                esi = findlast(isequal("#endsym:"), header)
+            else
+                esi = nothing
+            end
+
             if esi !== nothing
                 _oldsym = header[last(esi)+1:end]
             else
