@@ -22,7 +22,7 @@ tests = [
 @testset "BytePairEncoding" begin
     for t in tests
         fp = joinpath(dirname(@__FILE__), "test_$t.jl")
-        println("$fp ...")
+        @info "Test $t"
         include(fp)
     end
 end

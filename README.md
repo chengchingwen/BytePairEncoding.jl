@@ -1,3 +1,16 @@
+<a id="orga6ba865"></a>
+
+# BytePairEncoding.jl
+
+[![Build Status](https://travis-ci.com/chengchingwen/BytePairEncoding.jl.svg?branch=master)](https://travis-ci.com/chengchingwen/BytePairEncoding.jl)
+[![codecov](https://codecov.io/gh/chengchingwen/BytePairEncoding.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/chengchingwen/BytePairEncoding.jl)
+
+Pure Julia implementation of  the Byte Pair Encoding(BPE) method 
+in the [subword neural machine translation paper](https://arxiv.org/abs/1508.07909). It's a port of 
+the original python package [subword-nmt](https://github.com/rsennrich/subword-nmt). `BytePairEncoding.jl` support different tokenize
+method(with the help of WordTokenizers.jl). You can simply use `set_tokenizer([your tokenize function])` 
+and then Learn the BPE map with it.
+
 
 # Table of Contents
 
@@ -6,17 +19,6 @@
     1.  [Unicode Normalization](#orgf84a864)
 3.  [Examples](#orga7c7a03)
 4.  [Roadmap](#orgecfe740)
-
-
-<a id="orga6ba865"></a>
-
-# BytePairEncoding.jl
-
-Pure Julia implementation of  the Byte Pair Encoding(BPE) method 
-in the [subword neural machine translation paper](https://arxiv.org/abs/1508.07909). It's a port of 
-the original python package [subword-nmt](https://github.com/rsennrich/subword-nmt). `BytePairEncoding.jl` support different tokenize
-method(with the help of WordTokenizers.jl). You can simply use `set_tokenizer([your tokenize function])` 
-and then Learn the BPE map with it.
 
 
 <a id="org3bc249a"></a>
