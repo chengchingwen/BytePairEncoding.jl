@@ -3,6 +3,7 @@
 # BytePairEncoding.jl
 
 [![Build Status](https://travis-ci.com/chengchingwen/BytePairEncoding.jl.svg?branch=master)](https://travis-ci.com/chengchingwen/BytePairEncoding.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/vy07wjkoj1qhav83?svg=true)](https://ci.appveyor.com/project/chengchingwen/bytepairencoding-jl)
 [![codecov](https://codecov.io/gh/chengchingwen/BytePairEncoding.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/chengchingwen/BytePairEncoding.jl)
 
 Pure Julia implementation of  the Byte Pair Encoding(BPE) method 
