@@ -100,3 +100,6 @@ end
 
 
 normalize(nr::UtfNormalizer, s::AbstractString) = normalize(s, nr.option)
+
+(norm::UnNormalizer)(s::AbstractString) = s
+(norm::UtfNormalizer)(s::AbstractString) = normalize(nrom, s)

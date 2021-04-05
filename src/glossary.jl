@@ -1,4 +1,5 @@
-"regex escape from https://github.com/JuliaLang/julia/pull/29643"
+#regex escape from https://github.com/JuliaLang/julia/pull/29643
+"convert string to an exact match regex."
 function _regex_escape(s::AbstractString)
     res = replace(s, r"([()[\]{}?*+\-|^\$\\.&~#\s=!<>|:])" => s"\\\1")
     Regex(replace(res, "\0" => "\\0"))
@@ -45,3 +46,16 @@ function isolate_gloss(word::String, glosses::Vector{Regex})
     word
 end
 
+function isolate_gloss(xs::Vector{String}, glosses::Vector{Regex})
+  ys = Vector{String}()
+  for x in xs
+    append!(ys, isolate_gloss(x, glosses))
+  end
+  return ys
+end
+
+struct Glossary{T}
+  glossaries::Vector{T}
+end
+
+(g::Glossary)(x) = isolate_gloss(x, g.glossaries)
