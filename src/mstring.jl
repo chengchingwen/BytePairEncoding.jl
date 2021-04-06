@@ -13,6 +13,7 @@ end
 Merge(a::Merge, e) = Merge(a.string, a.offset, a.nunits, e)
 Merge(s::SubString) = Merge(s, nothing)
 Merge(s::SubString, e) = Merge(s.string, s.offset, s.ncodeunits, e)
+Merge(s::String, e) = Merge(SubString(s), e)
 
 SubString(a::Merge{String}) = SubString(a.string, a.offset+1, prevind(a.string, a.offset+a.nunits+1))
 
