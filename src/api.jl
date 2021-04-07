@@ -1,6 +1,6 @@
-BBPE(bfile::AbstractString; kws...) = open(io->BBPE(io; kws...), bfile)
+ByteLevelBPE(bfile::AbstractString; kws...) = open(io->ByteLevelBPE(io; kws...), bfile)
 
-function BBPE(io::IO;
+function ByteLevelBPE(io::IO;
               glossaries = nothing,
               merge::Int = -1, sepsym = nothing, endsym = nothing,
               has_header::Bool = true,
