@@ -13,7 +13,7 @@ end
 
 function GenericBPE{T}(;sepsym=nothing, oldendsym = nothing, endsym = nothing,
                        input_transform = nothing, output_transform = nothing,
-                       merging_rank = nothing, cache = Dict{T, Vector{T}}(),
+                       merging_rank = Dict{Tuple{T, T}, Int}(), cache = Dict{T, Vector{T}}(),
                        glossaries = nothing, codemap = nothing,
                        normalizer = nothing) where T
   return GenericBPE{T}(sepsym, oldendsym, endsym,
@@ -22,12 +22,20 @@ function GenericBPE{T}(;sepsym=nothing, oldendsym = nothing, endsym = nothing,
                        glossaries, codemap, normalizer)
 end
 
-Base.eltype(::GenericBPE{T}) where T = T
+function GenericBPE{T}(endsym, input_transform = nothing, codemap = nothing,
+                       glossaries = nothing, normalizer = nothing) where T
+  return GenericBPE{T}(; oldendsym=endsym, endsym=endsym, input_transform = input_transform,
+                       codemap = codemap, glossaries = glossaries, normalizer = normalizer)
+end
 
 function GenericBPE{T}(s, oe, e, i, o, m, c, g, cm, n) where T
   g !== nothing && (g = Glossary(g))
   return GenericBPE{T, typeof(i), typeof(o), typeof(g), typeof(cm), typeof(n)}(s, oe, e, i, o, m, c, g, cm, n)
 end
+
+Base.eltype(::GenericBPE{T}) where T = T
+Base.empty!(bpe::GenericBPE) = (empty!(bpe.cache); empty!(bpe.merging_rank))
+Base.length(bpe::GenericBPE) = length(bpe.merging_rank)
 
 read_bpefile(bfile::AbstractString; kws...) = open(io->read_bpefile(io; kws...), bfile)
 function read_bpefile(io::IO; has_header::Bool=true, merge::Int = -1)
@@ -160,13 +168,13 @@ function merge_loop!(bpe::GenericBPE, ms, x)
 end
 
 """
-  postprocess(bpe::GenericBPE{T}, ms::AbstractVector{Merge{T}}) where T
+  bpe_postprocess(bpe::GenericBPE{T}, ms::AbstractVector{Merge{T}}) where T
 
 Convert list of `Merge` to `Vector` of `T` (the encoding result we want).
 """
-postprocess(bpe::GenericBPE{T}, y::AbstractVector{Merge{T}}) where T = map(Base.Fix1(postprocess, bpe), y)
+bpe_postprocess(bpe::GenericBPE{T}, y::AbstractVector{Merge{T}}) where T = map(Base.Fix1(bpe_postprocess, bpe), y)
 
-function postprocess(bpe::GenericBPE{T}, y::Merge{T}) where T
+function bpe_postprocess(bpe::GenericBPE{T}, y::Merge{T}) where T
   transform(s) = T(change_extra(s, bpe.sepsym, bpe.oldendsym, bpe.endsym))
   return intern(transform(y))
 end
@@ -186,11 +194,11 @@ end
 Byte pair encode `x` without saving the result in `bpe.cache`.
 """
 function uncache_bpe(bpe::GenericBPE{T, IT, OT, G}, x) where {T, IT, OT, G}
-  !(G <: Nothing) && isgloss(bpe.glossaries, x) && return [postprocess(bpe, Merge(x, bpe.oldendsym))]
+  !(G <: Nothing) && isgloss(bpe.glossaries, x) && return [bpe_postprocess(bpe, Merge(x, bpe.oldendsym))]
   ms = merges(bpe, x)
-  length(ms) < 2 && return [postprocess(bpe, Merge(x, bpe.oldendsym))]
+  length(ms) < 2 && return [bpe_postprocess(bpe, Merge(x, bpe.oldendsym))]
   y = merge_loop!(bpe, ms, x)
-  return postprocess(bpe, y)
+  return bpe_postprocess(bpe, y)
 end
 
 uncache_bpe(bpe::GenericBPE, xs::V) where {V <: AbstractVector} = flatmap(eltype(bpe), Base.Fix1(uncache_bpe, bpe), xs)
@@ -222,7 +230,14 @@ function Base.show(io::IO, bpe::GenericBPE{T}) where T
   print(io, ")")
 end
 
-function (bpe::GenericBPE{T, IT, OT, G, C, Norm})(x) where {T, IT, OT, G, C, Norm}
+function preprocess(bpe::GenericBPE{T, IT, OT, Nothing, C, Norm}, x) where {T, IT, OT, C, Norm}
+  Norm <: Nothing || (x = bpe.normalizer(x))
+  IT <: Nothing || (x = bpe.input_transform(x))
+  C <: Nothing || (x = bpe.codemap(x))
+  return x
+end
+
+function preprocess(bpe::GenericBPE{T, IT, OT, G, C, Norm}, x) where {T, IT, OT, G, C, Norm}
   Norm <: Nothing || (x = bpe.normalizer(x))
   x = bpe.glossaries(x)
   g = map(Base.Fix1(isgloss, bpe.glossaries), x)
@@ -239,15 +254,11 @@ function (bpe::GenericBPE{T, IT, OT, G, C, Norm})(x) where {T, IT, OT, G, C, Nor
     x = ys
   end
   C <: Nothing || (x = bpe.codemap(x))
-  y  = bytepairencode(bpe, x)
-  OT <: Nothing || (y = bpe.output_transform(y))
-  return y
+  return x
 end
 
-function (bpe::GenericBPE{T, IT, OT, Nothing, C, Norm})(x) where {T, IT, OT, C, Norm}
-  Norm <: Nothing || (x = bpe.normalizer(x))
-  IT <: Nothing || (x = bpe.input_transform(x))
-  C <: Nothing || (x = bpe.codemap(x))
+function (bpe::GenericBPE{T, IT, OT})(x) where {T, IT, OT}
+  x = preprocess(bpe, x)
   y  = bytepairencode(bpe, x)
   OT <: Nothing || (y = bpe.output_transform(y))
   return y
