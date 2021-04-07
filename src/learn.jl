@@ -2,7 +2,7 @@ struct BPELearner{B<:GenericBPE}
   bpe::B
   merge::Int
   min_freq::Int
-  stats::Statistic
+  stats::Statistic{B}
 end
 
 get_vocab(bpe::GenericBPE{String}, v) = get_vocab!(bpe, Dict{String, Int}(), v)
