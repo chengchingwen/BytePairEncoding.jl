@@ -35,6 +35,7 @@ function BPELearner(vfiles::Vector{String}, num_sym::Int;
   bpe = GenericBPE{String}(endsym, whitespace_tokenize, nothing, nothing, normalizer)
   vocab = Dict{String, Int}()
   foreach(v->get_vocab!(bpe, vocab, v), vfiles)
+  stats = Statistic(vocab)
   return BPELearner(bpe, num_sym, min_freq, stats)
 end
 
