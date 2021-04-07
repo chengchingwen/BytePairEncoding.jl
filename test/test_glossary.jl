@@ -1,3 +1,4 @@
+using BytePairEncoding: isolate_gloss
 @testset "glossary" begin
     @testset "isolate_gloss" begin
         gloss = "like"
