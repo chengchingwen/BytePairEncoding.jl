@@ -1,85 +1,61 @@
-using WordTokenizers
-using InternedStrings
-
-"simply the built-in split function for the origin tokenize method in subword-nmt"
-whitespace_tokenize(str::AbstractString) = split(str)
-
-"get vocab with frequency counts"
-function get_vocab(vfile::AbstractString; normalizer)
-    vocab = Dict{String, Int}()
-    open(vfile) do io
-        for line ∈ eachline(io)
-            line = normalize(normalizer, line)
-            for word ∈ intern.(tokenize(line))
-                vocab[word] = get(vocab, word, 0) + 1
-            end
-        end
-    end
-    vocab
+struct BPELearner{B<:GenericBPE}
+  bpe::B
+  merge::Int
+  min_freq::Int
+  stats::Statistic
 end
 
-struct BPELearner
-    num_sym::Int
-    min_freq::Int
-    endsym::String
-    vfiles::Vector{String}
-
-    stats::Statistic
-    result::Vector{Pair{String, String}}
-
-    normalizer::AbstractNormalizer
-
-    function BPELearner(vfiles::Vector{String}, num_sym::Int;
-                        min_freq::Int = 2, endsym::String = "</w>",
-                        normalizer=UnNormalizer())
-        vocab = mapreduce((f)->get_vocab(f; normalizer=normalizer), merge!, vfiles)
-        stats = Statistic(vocab)
-        endsym != "</w>" && set_endsym(endsym)
-        new(num_sym, min_freq, endsym, vfiles,
-            stats,
-            Vector{Pair{String, String}}(undef, num_sym),
-            normalizer)
+get_vocab(bpe::GenericBPE{String}, v) = get_vocab!(bpe, Dict{String, Int}(), v)
+get_vocab!(bpe::GenericBPE{String}, vocab::Dict{String, Int}, vfile::AbstractString) = open(io->get_vocab!(bpe, vocab, io), vfile)
+function get_vocab!(bpe::GenericBPE{String}, vocab::Dict{String, Int}, io::IO)
+  for line in  eachline(io)
+    tokens = preprocess(bpe, line)
+    for token in tokens
+      vocab[intern(token)] = get(vocab, token, 0) + 1
     end
+  end
+  return vocab
 end
 
 "add a new file to learner"
-function add!(bper::BPELearner, vfile::String)
-    push!(bper.vfiles, vfile)
-    nv = get_vocab(vfile; normalizer=bper.normalizer)
-    update!(bper.stats, nv)
-end
+add!(bper::BPELearner, vfile::String) = update!(bper.stats, get_vocab(bper.bpe, vfile))
 
 "learn a BPE map"
 function learn!(bper::BPELearner)
-    if isassigned(bper.result)
-        bper.result = Vector(undef, bper.num_sym)
-    end
+  empty!(bper.bpe)
+  for i ∈ 1:bper.merge
+    mfp = most_freq(bper.stats)
+    get_freq(bper.stats, mfp) < bper.min_freq && break
+    merge_pair!(bper.stats, mfp)
+    bper.bpe.merging_rank[Tuple(mfp)] = i
+  end
+  return bper.bpe
+end
 
-    for i ∈ 1:bper.num_sym
-        mfp = most_freq(bper.stats)
-        get_freq(bper.stats, mfp) < bper.min_freq && (resize!(bper.result, i-1); break)
-        merge_pair!(bper.stats, mfp)
-        bper.result[i] = mfp
-    end
+function emit(bper::BPELearner)
+  m = Vector{Tuple{String, String}}(undef, length(bper.bpe))
+  for (bigram, rank) in bper.bpe.merging_rank
+    m[rank] = bigram
+  end
+  return m
 end
 
 "emit the BPE map to ofile; can add one-line comment to the header(first line)"
 function emit(bper::BPELearner, ofile::AbstractString; comment::String = "")
-    @assert '\n' ∉ comment && '\r' ∉ comment
-    open(ofile, "w+") do fo
-        write(fo, ":$comment#endsym:$(bper.endsym)\n")
-        for (f, s) ∈ bper.result
-            write(fo, f, " ", s, "\n")
-        end
+  @assert '\n' ∉ comment && '\r' ∉ comment
+  open(ofile, "w+") do fo
+    write(fo, ":$comment#endsym:$(bper.bpe.endsym)\n")
+    for (f, s) ∈ emit(bper)
+      write(fo, f, " ", s, "\n")
     end
-    ofile
+  end
+  return ofile
 end
 
-function Base.show(io::IO, b::BPELearner)
-    println(io, "BPELearner(",
-            "num_sym=$(b.num_sym), ",
-            "min_freq=$(b.min_freq), ",
-            "endsym=\"$(b.endsym)\", ",
-            "normailzer=$(typeof(b.normalizer)))")
-    io
+function Base.show(io::IO, bper::BPELearner)
+  print(io, "BPELearner(bpe = ")
+  show(io, bper.bpe)
+  print(io, ", merge = ", bper.merge)
+  print(io, ", min_freq = ", bper.min_freq)
+  print(io, ")")
 end

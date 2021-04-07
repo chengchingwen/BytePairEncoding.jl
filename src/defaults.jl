@@ -22,3 +22,7 @@ function gpt2_tokenizer(text)
   pattern = r"'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"
   return map(x->intern(x.match), eachmatch(pattern, text))
 end
+
+"simply the built-in split function for the origin tokenize method in subword-nmt"
+whitespace_tokenize(str::AbstractString) = split(str)
+
