@@ -1,4 +1,4 @@
-toStrTuple(bpe::GenericBPE, x::AbstractString) = Tuple(bpe_postprocess(bpe, merges(bpe, x)))
+toStrTuple(bpe::GenericBPE{T}, x::AbstractString) where T = Tuple(T.(merges(bpe, x)))
 
 struct Statistic{B<:GenericBPE}
   bpe::B
