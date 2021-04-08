@@ -10,13 +10,15 @@ import BytePairEncoding: Statistic, most_freq
 most_freq(stats::Statistic) = sort(collect(stats.pair_freq); alg=PartialQuickSort(1), by=(x)->(x.second, x.first), rev=true)[1].first
 
 
-@test isempty(detect_ambiguities(Base, Core, BytePairEncoding))
+@test isempty(detect_ambiguities(BytePairEncoding))
 
 tests = [
     "learn",
     "bpe",
+    "bbpe",
     "glossary",
     "utfnorm",
+
 ]
 
 @testset "BytePairEncoding" begin

@@ -63,6 +63,18 @@ struct UtfNormalizer <: AbstractNormalizer
     option::Int
 end
 
+"""
+  UtfNormalizer(nf=[:NFC, :NFD, NFKC, :NFKD, :NFKC_CF]::Symbol)
+
+unicode normalization.
+
+possible value of `nf`:
+1. NFC (Normalization Form Canonical Composition): Characters are decomposed and then recomposed by canonical equivalence.
+2. NFD (Normalization Form Canonical Decomposition): Characters are decomposed by canonical equivalence, and multiple combining characters are arranged in a specific order.
+3. NFKC (Normalization Form Compatibility Composition): Characters are decomposed by compatibility, then recomposed by canonical equivalence.
+4. NFKD (Normalization Form Compatibility Decomposition): Characters are decomposed by compatibility, and multiple combining characters are arranged in a specific order.
+5. NFKC_CF: NFKC + case folding
+"""
 UtfNormalizer(nf::Symbol) = UtfNormalizer(_compute_options(nf))
 function UtfNormalizer(
     stable::Bool=false,
@@ -98,5 +110,7 @@ function UtfNormalizer(
     )
 end
 
-
 normalize(nr::UtfNormalizer, s::AbstractString) = normalize(s, nr.option)
+
+(norm::UnNormalizer)(s::AbstractString) = s
+(norm::UtfNormalizer)(s::AbstractString) = normalize(norm, s)

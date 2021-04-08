@@ -1,34 +1,29 @@
-using InternedStrings
+toStrTuple(bpe::GenericBPE{T}, x::AbstractString) where T = Tuple(T.(merges(bpe, x)))
 
-"""
-    toStrTuple(x; ends)
-
-Turn string to a Tuple of each character in string.
-The last char will be concatenate with a `ends`.
-fefault `ends = "</w>"`
-
-#Example
-```jldoctest
-julia> x = toStrTuple("abcdef"; ends = "</w>")
-("a", "b", "c", "d", "e", "f</w>")
-
-```
-"""
-function toStrTuple(x::AbstractString; ends = "</w>")
-    fs = intern.(split(chop(x), ""))
-    push!(fs, intern(x[end] * ends))
-    filter!((x)-> x != "", fs)
-    Tuple(fs)
+struct Statistic{B<:GenericBPE}
+  bpe::B
+  vocab::Dict{Tuple, Int}
+  vkeys::Vector{Tuple}
+  pair_freq::Dict{Pair{String, String}, Int}
+  pair_index::Dict{Pair{String, String}, Vector{Int}}
 end
 
-"set the default end symbol"
-function set_endsym(sym::String)
-    @eval toStrTuple(str::AbstractString) = toStrTuple(str; ends=$sym)
-end
+Statistic(bper::BPELearner) = Statistic(bper.bpe, bper.vocabs)
+function Statistic(bpe::GenericBPE, v::Dict{String, Int})
+  vocab = Dict{Tuple, Int}((toStrTuple(bpe, k), v) for (k, v) ∈ pairs(v))
+  vkeys = collect(keys(vocab))
+  pair_freq = Dict{Pair{String, String}, Int}()
+  pair_index = Dict{Pair{String, String}, Vector{Int}}()
 
-"find adjacent characters. return a list of Pair"
-function bi_pairs(str::AbstractString)::Vector{Pair{String, String}}
-    bi_pairs(toStrTuple(str,; ends=""))
+  for (i, tp) ∈ enumerate(vkeys)
+    for p ∈ bi_pairs(tp)
+      pair_freq[p] = get(pair_freq, p, 0) + vocab[tp]
+      indices = get!(pair_index, p, Int[])
+      push!(indices, i)
+    end
+  end
+
+  Statistic(bpe, vocab, vkeys, pair_freq, pair_index)
 end
 
 "find adjacent element. return a list of Pair"
@@ -40,29 +35,6 @@ end
 "if only length one, return []"
 bi_pairs(stp::Tuple{String}) = Vector{Pair{String, String}}()
 
-struct Statistic
-    vocab::Dict{Tuple, Int}
-    vkeys::Vector{Tuple}
-    pair_freq::Dict{Pair{String, String}, Int}
-    pair_index::Dict{Pair{String, String}, Vector{Int}}
-
-    function Statistic(v::Dict{String, Int})
-        vocab = Dict{Tuple, Int}((toStrTuple(k), v) for (k, v) ∈ pairs(v))
-        vkeys = collect(keys(vocab))
-        pair_freq = Dict{Pair{String, String}, Int}()
-        pair_index = Dict{Pair{String, String}, Vector{Int}}()
-
-        for (i, tp) ∈ enumerate(vkeys)
-            for p ∈ bi_pairs(tp)
-                pair_freq[p] = get(pair_freq, p, 0) + vocab[tp]
-                indices = get!(pair_index, p, Int[])
-                push!(indices, i)
-            end
-        end
-
-        new(vocab, vkeys, pair_freq, pair_index)
-    end
-end
 
 "most frequently pair"
 most_freq(stats::Statistic) = argmax(stats.pair_freq)
@@ -71,7 +43,7 @@ most_freq(stats::Statistic) = argmax(stats.pair_freq)
 get_freq(stats::Statistic, p::Pair) = get(stats.pair_freq, p, 0)
 
 "get word freq"
-get_freq(stats::Statistic, str::String) = get_freq(stats, toStrTuple(str))
+get_freq(stats::Statistic, str::String) = get_freq(stats, toStrTuple(stats.bpe, str))
 get_freq(stats::Statistic, tp) = get(stats.vocab, tp, 0)
 
 "merge the gived pair and update Statistic"
@@ -133,7 +105,7 @@ end
 
 "update a word"
 function update!(stats::Statistic, str::String; freq::Int = 1)
-    stp = toStrTuple(str)
+    stp = toStrTuple(stats.bpe, str)
     if haskey(stats.vocab, stp)
         stats.vocab[stp] += freq
         for sbp ∈ bi_pairs(stp)

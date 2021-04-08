@@ -1,3 +1,4 @@
+using BytePairEncoding: isolate_gloss
 @testset "glossary" begin
     @testset "isolate_gloss" begin
         gloss = "like"
@@ -26,18 +27,17 @@
 
         #mocking bpe
         bpefile = joinpath(dirname(@__FILE__), "data/bpe.out")
-        bpe = Bpe(bpefile; sepsym="@@", endsym="", glossaries = glossaries)
-        import BytePairEncoding: Bpe
-        function (b::Bpe)(x::String)::Tuple
-            if x ∈ b.glossaries
-                tuple(x)
+        bpe = Bpe(bpefile; sepsym="@@", endsym="/", glossaries = glossaries)
+        function BytePairEncoding.uncache_bpe(bpe::GenericBPE, x::String)
+            if BytePairEncoding.isgloss(bpe.glossaries, x)
+                return [x*bpe.endsym]
             else
                 l = length(x)
-                tuple(x[1:div(l,2)], x[div(l,2)+1:end])
+                return [x[1:div(l,2)]*bpe.sepsym, x[div(l,2)+1:end]*bpe.endsym]
             end
         end
 
-        @test join(segment(bpe, "wordlikeword likeManuelword"), " ") == "wo@@ rd@@ like@@ wo@@ rd like@@ Manuel@@ wo@@ rd"
+        @test join(segment(bpe, "wordlikeword likeManuelword"), " ") == "wo@@ rd/ like/ wo@@ rd/ like/ Manuel/ wo@@ rd/"
 
     end
 end
