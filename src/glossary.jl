@@ -54,13 +54,13 @@ function isolate_gloss(xs::Vector{String}, glosses::Vector{Regex})
   return ys
 end
 
-struct Glossary{T}
-  glossaries::Vector{T}
+struct Glossary
+  glossaries::Vector{Regex}
 end
 
 Glossary(gs::Glossary) = gs
-Glossary(gs::Vector{Union{Regex, String}}) = Glossary(map(g->typeof(g) <: Regex ? g : _regex_escape(g), gs))
-Glossary(gs::Vector{String}) = Glossary(map(_regex_escape, gs))
+Glossary(gs::Vector) = Glossary(map(g->typeof(g) <: Regex ? g : _regex_escape(g), gs))
+
 
 (g::Glossary)(x) = isolate_gloss(x, g.glossaries)
 

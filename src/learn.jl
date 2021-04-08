@@ -5,6 +5,8 @@ struct BPELearner{B<:GenericBPE}
   vocabs::Dict{String, Int}
 end
 
+BPELearner(bpe::GenericBPE, merge, min_freq) = BPELearner(bpe, merge, min_freq, Dict{String, Int}())
+
 get_vocab(bpe::GenericBPE{String}, v) = get_vocab!(bpe, Dict{String, Int}(), v)
 get_vocab!(bpe::GenericBPE{String}, vocab::Dict{String, Int}, vfile::AbstractString) = open(io->get_vocab!(bpe, vocab, io), vfile)
 function get_vocab!(bpe::GenericBPE{String}, vocab::Dict{String, Int}, io::IO)

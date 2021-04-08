@@ -32,7 +32,7 @@ function CodeMap(args)
 
   for i = 1:len
     arg = args[i]
-    if arg isa Tuple{StepRange, StepRange}
+    if arg isa Tuple{StepRange, StepRange} || arg isa Pair{StepRange{Char, Int}, StepRange{Char, Int}}
       fi, ti = arg
       @assert length(fi) == length(ti) "codemap of two range with different length"
       from[i] = fi
