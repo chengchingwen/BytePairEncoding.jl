@@ -1,8 +1,27 @@
 # mapping some unicode character to some other value
 
-struct CodeMap
+function codesize(crs)
+  for cr in crs
+    c = cr.stop
+    x = Int(c)
+    if x > Int(typemax(UInt16))
+      return UInt32
+    elseif x > Int(typemax(UInt8))
+      return UInt16
+    end
+  end
+  return UInt8
+end
+
+struct CodeMap{F, T}
   from::Vector{StepRange{Char, Int}}
   to::Vector{StepRange{Char, Int}}
+
+  function CodeMap(from, to)
+    From = codesize(from)
+    To = codesize(to)
+    return new{From, To}(from, to)
+  end
 end
 
 CodeMap(args...) = CodeMap(args)
@@ -37,6 +56,7 @@ function CodeMap(args)
       error("unknow codemap format: only tuple of two char range or pair of char is supported: $(typeof(arg))")
     end
   end
+
   return CodeMap(from, to)
 end
 
@@ -64,9 +84,15 @@ function codeunmap(cm::CodeMap, x)
   return UInt8(x)
 end
 
-encode(cm::CodeMap, x::String) = transcode(String, map(c->codemap(cm, c), transcode(UInt8, x)))
-decode(cm::CodeMap, x::String) = transcode(String, map(c->codeunmap(cm, c), transcode(UInt16, x)))
+encode(cm::CodeMap{F, T}, x::String) where {F, T} = transcode(String, map(c->codemap(cm, c), transcode(F, x)))
+decode(cm::CodeMap{F, T}, x::String) where {F, T} = transcode(String, map(c->codeunmap(cm, c), transcode(T, x)))
 encode(cm::CodeMap, xs::AbstractVector{String}) = map(Base.Fix1(encode, cm), xs)
 decode(cm::CodeMap, xs::AbstractVector{String}) = map(Base.Fix1(decode, cm), xs)
 
 (cm::CodeMap)(x) = encode(cm, x)
+
+struct UnMap
+  codemap::CodeMap
+end
+
+(um::UnMap)(x) = decode(um.codemap, x)
