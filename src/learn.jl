@@ -22,6 +22,13 @@ end
 "add a new file to learner"
 add!(bper::BPELearner, vfile::String) = get_vocab!(bper.bpe, bper.vocabs, vfile)
 
+function add!(bper::BPELearner, vocab::Dict{String, Int})
+  for (k, v) in vocab
+    bper.vocabs[k] = get(bper.vocabs, k, 0) + v
+  end
+  bper.vocabs
+end
+
 "learn a BPE map"
 function learn!(bper::BPELearner)
   empty!(bper.bpe)
