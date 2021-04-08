@@ -10,7 +10,7 @@ julia> mybpe = GenericBPE{String}(; oldendsym = "@w@", sepsym = "=",
 	normalizer = BytePairEncoding.UtfNormalizer(:NFKC_CF), glossaries = BytePairEncoding.Glossary([r"[0-9]"]))
 GenericBPE{String}(n_merge=0, endsym=@w@, sepsym==, oldendsym=@w@, input_transform=gpt2_tokenizer, glossaries=BytePairEncoding.Glossary(Regex[r"[0-9]"]), codemap=BytePairEncoding.CodeMap{UInt8, UInt16}(StepRange{Char, Int64}['\0':1:' ', '\x7f':1:' ', '\uad':1:'\uad'], StepRange{Char, Int64}['Ā':1:'Ġ', 'ġ':1:'ł', 'Ń':1:'Ń']), normalizer=UtfNormalizer(1038))
 
-# create the learner
+# create the learner, here we set the maximum merge rank = 5000, and required minimum word frequency = 10
 julia> bper = BPELearner(mybpe, 5000, 10)
 BPELearner(bpe = GenericBPE{String}(n_merge=0, endsym=@w@, sepsym==, oldendsym=@w@, input_transform=gpt2_tokenizer, glossaries=BytePairEncoding.Glossary(Regex[r"[0-9]"]), codemap=BytePairEncoding.CodeMap{UInt8, UInt16}(StepRange{Char, Int64}['\0':1:' ', '\x7f':1:' ', '\uad':1:'\uad'], StepRange{Char, Int64}['Ā':1:'Ġ', 'ġ':1:'ł', 'Ń':1:'Ń']), normalizer=UtfNormalizer(1038)), merge = 5000, min_freq = 10)
 
@@ -66,4 +66,19 @@ julia> mybpe(" Is this a 😺")
 julia> emit(bper, "./bpe.out")
 "./bpe.out"
 
+shell> head -n10 bpe.out
+:#endsym:@w@
+Ġ t
+Ġt h
+Ġ a
+Ġ i
+Ġ o
+Ġ s
+Ġ ,@w@
+Ġth e@w@
+i n
+
 ```
+
+You can also use `vocab = BytePairEncoding.get_vocab(mybpe, file)` to get the vocabularies parallelly from given files. 
+And then use `add!(bper, vocab)` to merge the vocabularies and `learn!(bper)` the BPE.

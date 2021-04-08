@@ -78,5 +78,6 @@ julia> join(ans)
 Pages = [
   "encode.md",
   "learn.md",
+  "utils.md"
 ]
 ```
