@@ -58,6 +58,8 @@ struct Glossary{T}
   glossaries::Vector{T}
 end
 
+Glossary(gs::Glossary) = gs
+Glossary(gs::Vector{Union{Regex, String}}) = Glossary(map(g->typeof(g) <: Regex ? g : _regex_escape(g), gs))
 Glossary(gs::Vector{String}) = Glossary(map(_regex_escape, gs))
 
 (g::Glossary)(x) = isolate_gloss(x, g.glossaries)

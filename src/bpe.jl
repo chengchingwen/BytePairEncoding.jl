@@ -11,7 +11,7 @@ struct GenericBPE{T, IT, OT, G, C, Norm}
   normalizer::Norm
 end
 
-function GenericBPE{T}(;sepsym=nothing, oldendsym = nothing, endsym = nothing,
+function GenericBPE{T}(;sepsym=nothing, oldendsym = nothing, endsym = oldendsym,
                        input_transform = nothing, output_transform = nothing,
                        merging_rank = Dict{Tuple{T, T}, Int}(), cache = Dict{T, Vector{T}}(),
                        glossaries = nothing, codemap = nothing,
@@ -22,14 +22,32 @@ function GenericBPE{T}(;sepsym=nothing, oldendsym = nothing, endsym = nothing,
                        glossaries, codemap, normalizer)
 end
 
-function GenericBPE{T}(endsym, input_transform = nothing, codemap = nothing,
+function GenericBPE(bpe::GenericBPE{T}; kws...) where T
+  kws = kws.data
+  sepsym = haskey(kws, :sepsym) ? kws.sepsym : bpe.sepsym
+  oldendsym = haskey(kws, :oldendsym) ? kws.oldendsym : bpe.oldendsym
+  endsym = haskey(kws, :endsym) ? kws.endsym : bpe.endsym
+  input_transform = haskey(kws, :input_transform) ? kws.input_transform : bpe.input_transform
+  output_transform = haskey(kws, :output_transform) ? kws.output_transform : bpe.output_transform
+  merging_rank = haskey(kws, :merging_rank) ? kws.merging_rank : bpe.merging_rank
+  cache = haskey(kws, :cache) ? kws.cache : bpe.cache
+  glossaries = haskey(kws, :glossaries) ? kws.glossaries : bpe.glossaries
+  codemap = haskey(kws, :codemap) ? kws.codemap : bpe.codemap
+  normalizer = haskey(kws, :normalizer) ? kws.normalizer : bpe.normalizer
+  return GenericBPE{T}(; sepsym, oldendsym, endsym,
+                       input_transform, output_transform,
+                       merging_rank, cache,
+                       glossaries, codemap, normalizer)
+end
+
+
+function GenericBPE{T}(endsym, merging_rank = Dict{Tuple{T, T}, Int}(); input_transform = nothing, codemap = nothing,
                        glossaries = nothing, normalizer = nothing) where T
   return GenericBPE{T}(; oldendsym=endsym, endsym=endsym, input_transform = input_transform,
                        codemap = codemap, glossaries = glossaries, normalizer = normalizer)
 end
 
 function GenericBPE{T}(s, oe, e, i, o, m, c, g, cm, n) where T
-  g !== nothing && (g = Glossary(g))
   return GenericBPE{T, typeof(i), typeof(o), typeof(g), typeof(cm), typeof(n)}(s, oe, e, i, o, m, c, g, cm, n)
 end
 
