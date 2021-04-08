@@ -7,7 +7,7 @@ export normalize, UtfNormalizer
 export BPELearner, learn!, add!, emit
 export Bpe, process_line, segment, segment_token
 
-export GenericBPE
+export GenericBPE, ByteLevelBPE
 
 include("./utfnorm.jl")
 include("./codemap.jl")
