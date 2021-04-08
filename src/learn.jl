@@ -2,7 +2,7 @@ struct BPELearner{B<:GenericBPE}
   bpe::B
   merge::Int
   min_freq::Int
-  stats::Statistic{B}
+  vocabs::Dict{String, Int}
 end
 
 get_vocab(bpe::GenericBPE{String}, v) = get_vocab!(bpe, Dict{String, Int}(), v)
@@ -18,15 +18,16 @@ function get_vocab!(bpe::GenericBPE{String}, vocab::Dict{String, Int}, io::IO)
 end
 
 "add a new file to learner"
-add!(bper::BPELearner, vfile::String) = update!(bper.stats, get_vocab(bper.bpe, vfile))
+add!(bper::BPELearner, vfile::String) = get_vocab!(bper.bpe, bper.vocabs, vfile)
 
 "learn a BPE map"
 function learn!(bper::BPELearner)
   empty!(bper.bpe)
+  stats = Statistic(bper)
   for i ∈ 1:bper.merge
-    mfp = most_freq(bper.stats)
-    get_freq(bper.stats, mfp) < bper.min_freq && break
-    merge_pair!(bper.stats, mfp)
+    mfp = most_freq(stats)
+    get_freq(stats, mfp) < bper.min_freq && break
+    merge_pair!(stats, mfp)
     bper.bpe.merging_rank[Tuple(mfp)] = i
   end
   return bper.bpe

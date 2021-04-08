@@ -37,14 +37,12 @@ function BPELearner(vfiles::Vector{String}, num_sym::Int;
   bpe = GenericBPE{String}(endsym; input_transform = whitespace_tokenize, normalizer)
   vocab = Dict{String, Int}()
   foreach(v->get_vocab!(bpe, vocab, v), vfiles)
-  stats = Statistic(bpe, vocab)
-  return BPELearner(bpe, num_sym, min_freq, stats)
+  return BPELearner(bpe, num_sym, min_freq, vocab)
 end
 
 function BPELearner(vocab::Dict{String, Int};
                     min_freq::Int = 2, endsym = "</w>",
                     normalizer = nothing)
   bpe = GenericBPE{String}(endsym; input_transform = whitespace_tokenize, normalizer)
-  stats = Statistic(bpe, vocab)
-  return BPELearner(bpe, num_sym, min_freq, stats)
+  return BPELearner(bpe, num_sym, min_freq, vocab)
 end

@@ -8,6 +8,7 @@ struct Statistic{B<:GenericBPE}
   pair_index::Dict{Pair{String, String}, Vector{Int}}
 end
 
+Statistic(bper::BPELearner) = Statistic(bper.bpe, bper.vocabs)
 function Statistic(bpe::GenericBPE, v::Dict{String, Int})
   vocab = Dict{Tuple, Int}((toStrTuple(bpe, k), v) for (k, v) ∈ pairs(v))
   vkeys = collect(keys(vocab))
