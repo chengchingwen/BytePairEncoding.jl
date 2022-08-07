@@ -1,56 +1,94 @@
-"""
-  Merge{T}(s::T, offset::Int, nunits::Int, extra::Union{T, Nothing})
-
-Similar to `SubString` but different.
-"""
-struct Merge{T}
-  string::T
-  offset::Int
-  nunits::Int
-  extra::Union{T, Nothing}
+struct Merge
+    string::String
+    offset::UInt16
+    ncodeunits::UInt16
+    extra::Bool
 end
 
-Merge(a::Merge, e) = Merge(a.string, a.offset, a.nunits, e)
-Merge(s::SubString) = Merge(s, nothing)
-Merge(s::SubString, e) = Merge(s.string, s.offset, s.ncodeunits, e)
-Merge(s::String, e) = Merge(SubString(s), e)
+Merge(str, offset::Int, ncodeunits::Int, extra) = Merge(str, UInt16(offset), UInt16(ncodeunits), extra)
+Merge(a::Merge, e::Bool) = Merge(a.string, a.offset, a.ncodeunits, e)
+Merge(s::SubString, e::Bool = false) = Merge(s.string, s.offset, s.ncodeunits, e)
+Merge(s::String, e::Bool = false) = Merge(SubString(s), e)
 
-SubString(a::Merge{String}) = SubString(a.string, a.offset+1, prevind(a.string, a.offset+a.nunits+1))
-
-function String(a::Merge{String})
-  s = SubString(a)
-  if a.extra === nothing
-    return String(s)
-  else
-    return string(s, a.extra)
-  end
-end
-
-change_extra(a::Merge, s, o, e) = a.extra == o ? Merge(a, e) : Merge(a, s)
-
-function Base.:(*)(a::Merge{T}, b::Merge{T}) where T
+function Merge(a::Merge, b::Merge)
   if a.string === b.string
     if a.offset < b.offset
       offset = a.offset
-      @assert offset + a.nunits == b.offset "merge un-adjacent Merge"
+      @assert offset + a.ncodeunits == b.offset "merge un-adjacent Merge"
     elseif a.offset > b.offset
       offset = b.offset
-      @assert offset + b.nunits == a.offset "merge un-adjacent Merge"
+      @assert offset + b.ncodeunits == a.offset "merge un-adjacent Merge"
     else
       error("merge two Merge at same offset: partial string?")
     end
-    nunits = a.nunits + b.nunits
+    nunits = a.ncodeunits + b.ncodeunits
     return Merge(a.string, offset, nunits, b.extra)
   else
     error("merge different Merge")
   end
 end
 
-function Base.show(io::IO, a::Merge)
-  show(io, SubString(a))
-  if a.extra !== nothing
-    print(io, " + ")
-    show(io, a.extra)
-  end
-  return io
+function parse_merge(line::AbstractString, endsym = nothing)
+    pair = Tuple(split(line, ' '; limit = 2))::NTuple{2, SubString{String}}
+    p1, p2 = pair
+    p1 = Merge(intern(p1))
+    if !isnothing(endsym)
+        m = match(endsym, p2)
+        extra = !isnothing(m)
+        if extra
+            p2 = m.captures[]
+        end
+        p2 = Merge(intern(p2), extra)
+    else
+        p2 = Merge(intern(p2))
+    end
+    return (p1, p2)
+end
+
+read_merges(f::AbstractString, endsym = nothing; kws...) = open(io->read_merges(io, endsym; kws...), f)
+function read_merges(io::IO, endsym = nothing; limit = typemax(Int), header = true)
+    rank = Dict{NTuple{2, Merge}, Int}()
+    if header
+        line1 = readline(io)
+        if isnothing(endsym)
+            # use the endsym from file only when not provided
+            esi = findlast("#endsym:", line1)
+            if !isnothing(esi)
+                endsym = line1[last(esi)+1:end]
+            end
+        end
+    end
+    pattern = isnothing(endsym) ? nothing : Base.compile(Regex("(.*)$endsym\$"))
+    for (i, line) in enumerate(eachline(io))
+        i > limit && break
+        p = parse_merge(line, pattern)
+        rank[p] = i
+    end
+    return rank
+end
+
+function Base.hash(m::Merge, h::UInt)
+    h = hash(m.extra, h) + Base.memhash_seed
+    str_size = m.ncodeunits * sizeof(UInt8)
+    str = m.string
+    ptr = convert(Ptr{UInt8}, pointer(str)) + m.offset
+    return GC.@preserve str ccall(Base.memhash, UInt, (Ptr{UInt8}, Csize_t, UInt32), ptr, str_size, h % UInt32) + h
+end
+
+function Base.:(==)(m1::Merge, m2::Merge)
+    s = m1.ncodeunits
+    s == m2.ncodeunits || return false
+    str1 = m1.string
+    str2 = m2.string
+    p1 = convert(Ptr{UInt8}, pointer(str1)) + m1.offset
+    p2 = convert(Ptr{UInt8}, pointer(str2)) + m2.offset
+    return GC.@preserve str1 str2 0 == Base._memcmp(p1, p2, s * sizeof(UInt8))
+end
+
+function as_string(m::Merge, sepsym, endsym)
+    str = m.string
+    offset = m.offset
+    s = SubString(str, offset+1, prevind(str, offset + m.ncodeunits + 1))
+    sym = m.extra ? endsym : sepsym
+    return isnothing(sym) ? intern(s) : intern(string(s, sym))
 end
