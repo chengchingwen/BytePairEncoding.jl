@@ -1,5 +1,4 @@
 using Unicode
-using InternedStrings
 
 abstract type AbstractBPE end
 
@@ -66,7 +65,7 @@ function merge!(ms, i)
   return @inbounds @view(ms[1:desidx])
 end
 
-function merges(x::AbstractString, endsym)
+function merges(x::AbstractString, endsym = nothing)
   buf = map(Merge, graphemes(x))
   if endsym !== nothing
     @inbounds buf[end] = Merge(buf[end], true)
