@@ -15,12 +15,12 @@
 # end
 
 "the codemap used by openai gpt2"
-default_codemap() = CodeMap([(0:32, 256:288), (127:160, 289:322), 173=>323])
+default_codemap() = CodeMap(Pair[0:32=>256:288, 127:160=>289:322, 173=>323])
 
 "the tokenizer used by openai gpt2"
 function gpt2_tokenizer(text)
   pattern = r"'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"
-  return map(x->intern(x.match), eachmatch(pattern, text))
+  return map(x->String(x.match), eachmatch(pattern, text))
 end
 
 "simply the built-in split function for the origin tokenize method in subword-nmt"
