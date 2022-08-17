@@ -2,7 +2,6 @@ module BytePairEncoding
 
 using TextEncodeBase
 using TextEncodeBase: CodeMap
-using WordTokenizers
 
 export BPELearner
 export BPE, BPETokenization

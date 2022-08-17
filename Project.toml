@@ -7,12 +7,10 @@ version = "0.2.0"
 StructWalk = "31cdf514-beb7-4750-89db-dda9d2eb8d3d"
 TextEncodeBase = "f92c20c0-9f2a-4705-8116-881385faba05"
 Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
-WordTokenizers = "796a5d58-b03d-544a-977e-18100b691f6e"
 
 [compat]
 StructWalk = "0.2"
 TextEncodeBase = "0.5.4"
-WordTokenizers = "0.5.5"
 julia = "1.6"
 
 [extras]
