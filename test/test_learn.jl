@@ -1,26 +1,26 @@
-@testset "learn" begin
-    bper = BPELearner([joinpath(dirname(@__FILE__), "data/corpus.en")], 1000)
-    learn!(bper)
-    bper_result = emit(bper)
-    open(joinpath(dirname(@__FILE__), "data/bpe.ref")) do ref
-        _v, lines = Iterators.peel(readlines(ref))
-        result = map((x)->Tuple(split(x)), lines)
-        @test length(bper.bpe) == length(result)
+using BytePairEncoding: BPETokenization, NoBPE, count_words, read_merges, write_merges
+using TextEncodeBase: WordTokenization
 
-        for (lr, res) ∈ zip(bper_result, result)
+@testset "learn" begin
+    tkn = BPETokenization(WordTokenization(tokenize = _python_whitespace_tokenizer), NoBPE())
+    bper = BPELearner(tkn)
+    word_counts = count_words(bper, joinpath(@__DIR__, "data/corpus.en"))
+    rank = BytePairEncoding.learn(most_freq, word_counts, 1000, bper.endsym, bper.min_freq)
+    list = BytePairEncoding.rank2list(rank, bper.endsym)
+    open(joinpath(@__DIR__, "data/bpe.ref")) do ref
+        lines = Iterators.drop(eachline(ref), 1)
+        result = map(Tuple ∘ split, lines)
+        @test length(list) == length(result)
+        for (lr, res) ∈ zip(list, result)
             @test lr == res
         end
     end
+    @test read_merges(joinpath(@__DIR__, "data/bpe.ref"), bper.endsym) == rank
 
-    bpefile = joinpath(dirname(@__FILE__), "data/bpe.out")
-    emit(bper, bpefile; comment = "this is for testing...")
+    bpe_out = tempname()
+    open(io->write_merges(io, rank, bper.endsym; comment = "this is for testing..."), bpe_out, "w+")
+    @test open(Base.Fix2(read_merges, bper.endsym), bpe_out) == rank
 
-    open(bpefile) do bf
-        _h = readline(bf)
-        for (i, line) ∈ enumerate(eachline(bf))
-            pair = Tuple(split(line, " "))
-            @test pair == bper_result[i]
-        end
-    end
+    bpefile = joinpath(@__DIR__, "data/bpe.out")
+    @test read(bpefile, String) == read(bpe_out, String)
 end
-
