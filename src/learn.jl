@@ -56,7 +56,7 @@ end
 function (bper::BPELearner)(f, word_counts, n_merge; cached = true)
     rank = learn(f, word_counts, n_merge, bper.endsym, bper.min_freq)
     bpe = BPE(rank; sepsym = bper.sepsym, endsym = bper.endsym)
-    cached && (bpe = CacheBPE(bpe))
+    cached && (bpe = CachedBPE(bpe))
     return replace(TextEncodeBase.tokenization(bper.tokenizer)) do x
         if x isa BPETokenization && x.bpe isa NoBPE
             return BPETokenization(x.base, bpe)
