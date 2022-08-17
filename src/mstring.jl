@@ -71,6 +71,26 @@ function read_merges(io::IO, endsym = nothing; limit = typemax(Int), header = tr
     return rank
 end
 
+function rank2list(rank::Dict{NTuple{2, Merge}, Int}, endsym = nothing)
+    list = Vector{NTuple{2, String}}(undef, length(rank))
+    for (k, v) in rank
+        list[v] = as_string.(k, nothing, endsym)
+    end
+    return list
+end
+
+write_merges(file::AbstractString, rank, endsym = nothing; limit = typemax(Int), comment = "", header = true) =
+    open(io->write_merges(io, rank, endsym; limit, comment, header), file)
+function write_merges(io::IO, rank, endsym = nothing; limit = typemax(Int), comment = "", header = true)
+    list = rank2list(rank, endsym)
+    header && write(io, ":$(comment)#endsym:$(endsym)\n")
+    for i in 1:min(length(rank), limit)
+        p = list[i]
+        write(io, p[1], ' ', p[2], '\n')
+    end
+    return
+end
+
 function Base.hash(m::Merge, h::UInt)
     h = hash(m.extra, h) + Base.memhash_seed
     str_size = m.ncodeunits * sizeof(UInt8)
