@@ -83,7 +83,7 @@ write_merges(file::AbstractString, rank, endsym = nothing; limit = typemax(Int),
     open(io->write_merges(io, rank, endsym; limit, comment, header), file)
 function write_merges(io::IO, rank, endsym = nothing; limit = typemax(Int), comment = "", header = true)
     list = rank2list(rank, endsym)
-    header && write(io, ":$(comment)#endsym:$(endsym)\n")
+    header && println(io, ":$(comment)#endsym:$(endsym)")
     for i in 1:min(length(rank), limit)
         p = list[i]
         println(io, p[1], ' ', p[2])
