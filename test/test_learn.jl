@@ -24,11 +24,11 @@ using TextEncodeBase: WordTokenization
     bpefile = joinpath(@__DIR__, "data/bpe.ref")
     ref = open(bpefile) do io
         readline(io)
-        read(io, String)
+        readlines(io)
     end
     tst = open(bpe_out) do io
         readline(io)
-        read(io, String)
+        readlines(io)
     end
     @test ref == tst
 end
