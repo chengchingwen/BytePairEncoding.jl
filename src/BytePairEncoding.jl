@@ -11,6 +11,6 @@ include("mstring.jl")
 include("bpe.jl")
 include("tokenization.jl")
 include("learn.jl")
-include("defaults.jl")
+include("gpt2_utils.jl")
 
 end # module
