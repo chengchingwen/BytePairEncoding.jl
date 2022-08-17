@@ -28,19 +28,22 @@ function Merge(a::Merge, b::Merge)
   end
 end
 
-function parse_merge(line::AbstractString, endsym = nothing)
+function parse_merge(line::AbstractString, pattern = nothing)
     pair = Tuple(split(line, ' '; limit = 2))::NTuple{2, SubString{String}}
+    return parse_merge(pair, pattern)
+end
+function parse_merge(pair::NTuple{2}, pattern = nothing)
     p1, p2 = pair
-    p1 = Merge(intern(p1))
-    if !isnothing(endsym)
-        m = match(endsym, p2)
+    p1 = Merge(String(p1))
+    if !isnothing(pattern)
+        m = match(pattern, p2)
         extra = !isnothing(m)
         if extra
             p2 = m.captures[]
         end
-        p2 = Merge(intern(p2), extra)
+        p2 = Merge(String(p2), extra)
     else
-        p2 = Merge(intern(p2))
+        p2 = Merge(String(p2))
     end
     return (p1, p2)
 end
@@ -54,11 +57,12 @@ function read_merges(io::IO, endsym = nothing; limit = typemax(Int), header = tr
             # use the endsym from file only when not provided
             esi = findlast("#endsym:", line1)
             if !isnothing(esi)
-                endsym = line1[last(esi)+1:end]
+                endsym_s = line1[last(esi)+1:end]
+                endsym = isempty(endsym_s) ? nothing : endsym_s
             end
         end
     end
-    pattern = isnothing(endsym) ? nothing : Base.compile(Regex("(.*)$endsym\$"))
+    pattern = isnothing(endsym) ? nothing : Base.compile(Regex("(.*)\\Q$endsym\\E\$"))
     for (i, line) in enumerate(eachline(io))
         i > limit && break
         p = parse_merge(line, pattern)
@@ -76,6 +80,7 @@ function Base.hash(m::Merge, h::UInt)
 end
 
 function Base.:(==)(m1::Merge, m2::Merge)
+    m1.extra == m2.extra || return false
     s = m1.ncodeunits
     s == m2.ncodeunits || return false
     str1 = m1.string
@@ -90,5 +95,5 @@ function as_string(m::Merge, sepsym, endsym)
     offset = m.offset
     s = SubString(str, offset+1, prevind(str, offset + m.ncodeunits + 1))
     sym = m.extra ? endsym : sepsym
-    return isnothing(sym) ? intern(s) : intern(string(s, sym))
+    return isnothing(sym) ? String(s) : string(s, sym)
 end
