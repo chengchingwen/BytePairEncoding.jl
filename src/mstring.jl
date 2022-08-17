@@ -86,7 +86,7 @@ function write_merges(io::IO, rank, endsym = nothing; limit = typemax(Int), comm
     header && write(io, ":$(comment)#endsym:$(endsym)\n")
     for i in 1:min(length(rank), limit)
         p = list[i]
-        write(io, p[1], ' ', p[2], '\n')
+        println(io, p[1], ' ', p[2])
     end
     return
 end

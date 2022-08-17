@@ -22,5 +22,13 @@ using TextEncodeBase: WordTokenization
     @test open(Base.Fix2(read_merges, bper.endsym), bpe_out) == rank
 
     bpefile = joinpath(@__DIR__, "data/bpe.ref")
-    @test split(read(bpefile, String), '\n'; limit=2)[2] == split(read(bpe_out, String), '\n'; limit=2)[2]
+    ref = open(bpefile) do io
+        readline(io)
+        read(io, String)
+    end
+    tst = open(bpe_out) do io
+        readline(io)
+        read(io, String)
+    end
+    @test ref == tst
 end
