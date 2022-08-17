@@ -11,5 +11,5 @@ CurrentModule = BytePairEncoding
 ```
 
 ```@autodocs
-Modules = [OhMyArtifacts]
+Modules = [BytePairEncoding]
 ```
