@@ -18,7 +18,7 @@ end
 
 @testset "bpe" begin
     infile = joinpath(dirname(@__FILE__), "data/corpus.en")
-    bpefile = joinpath(dirname(@__FILE__), "data/bpe.out")
+    bpefile = joinpath(dirname(@__FILE__), "data/bpe.ref")
     refile = joinpath(dirname(@__FILE__), "data/corpus.bpe.ref.en")
 
     merges = read_merges(bpefile, "</w>")

@@ -21,6 +21,6 @@ using TextEncodeBase: WordTokenization
     open(io->write_merges(io, rank, bper.endsym; comment = "this is for testing..."), bpe_out, "w+")
     @test open(Base.Fix2(read_merges, bper.endsym), bpe_out) == rank
 
-    bpefile = joinpath(@__DIR__, "data/bpe.out")
-    @test read(bpefile, String) == read(bpe_out, String)
+    bpefile = joinpath(@__DIR__, "data/bpe.ref")
+    @test split(read(bpefile, String), '\n'; limit=2)[2] == split(read(bpe_out, String), '\n'; limit=2)[2]
 end
