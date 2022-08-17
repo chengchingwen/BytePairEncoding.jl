@@ -74,30 +74,31 @@ function merge_loop!(merging_rank, ms, x)
 end
 
 function merge!(ms, i)
-  m1, m2 = _bigram(ms, i)
-  n = Merge(m1, m2)
-  desidx = i
-  len = length(ms) - 1
-  i += 2
-  @inbounds ms[desidx] = n
-  @inbounds while i <= len
-    desidx += 1
-    m = ms[i]
-    if m == m1 && ms[i+1] == m2
-      ms[desidx] = n
-      i += 2
-    else
-      ms[desidx] = m
-      i += 1
+    m1, m2 = _bigram(ms, i)
+    n = Merge(m1, m2)
+    desidx = i
+    len = length(ms) - 1
+    i += 2
+    @inbounds ms[desidx] = n
+    @inbounds while i <= len
+        desidx += 1
+        m = ms[i]
+        mn = ms[i+1]
+        if m == m1 && mn == m2
+            ms[desidx] = Merge(m, mn)
+            i += 2
+        else
+            ms[desidx] = m
+            i += 1
+        end
     end
-  end
 
-  if i == length(ms)
-    desidx += 1
-    @inbounds ms[desidx] = ms[i]
-  end
+    if i == length(ms)
+        desidx += 1
+        @inbounds ms[desidx] = ms[i]
+    end
 
-  return @inbounds @view(ms[1:desidx])
+    return @inbounds @view(ms[1:desidx])
 end
 
 function merges(x::AbstractString, endsym = nothing)
