@@ -12,8 +12,5 @@ include("bpe.jl")
 include("tokenization.jl")
 include("learn.jl")
 include("defaults.jl")
-# include("./api.jl")
-# include("./old_api.jl")
-
 
 end # module
