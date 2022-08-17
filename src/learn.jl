@@ -1,71 +1,67 @@
-struct BPELearner{B<:GenericBPE}
-  bpe::B
-  merge::Int
-  min_freq::Int
-  vocabs::Dict{String, Int}
+using TextEncodeBase: FlatTokenizer, Document, getvalue, TokenizerStyle
+using StructWalk: scan
+
+include("stats.jl")
+
+"""
+    BPELearner(tokenization::AbstractTokenization; min_freq = 10, endsym = "</w>", sepsym = nothing)
+
+Construct a learner with a `tokenization` which has `BPETokenization` and `NoBPE` inside.
+
+    (bper::BPELearner)(word_counts, n_merge)
+
+Calling the learner on a `word_counts` dictionary (created by [`count_words`](@ref)) generate a new `tokenization`
+  where `NoBPE` is replaced with the learned `BPE`.
+"""
+struct BPELearner{T<:AbstractTokenizer}
+    tokenizer::T
+    min_freq::Int
+    endsym::Union{String, Nothing}
+    sepsym::Union{String, Nothing}
 end
 
-BPELearner(bpe::GenericBPE, merge, min_freq) = BPELearner(bpe, merge, min_freq, Dict{String, Int}())
+BPELearner(tokenization::AbstractTokenization; kws...) = BPELearner(FlatTokenizer(tokenization); kws...)
+function BPELearner(tokenizer::AbstractTokenizer; min_freq = 10, endsym = "</w>", sepsym = nothing)
+    check = Ref{Bool}(false)
+    scan(x -> x isa BPETokenization && x.bpe isa NoBPE && (check[] = true), TokenizerStyle(), tokenizer)
+    check[] || error("tokenizer does not have BPETokenization with NoBPE.")
+    return BPELearner(tokenizer, min_freq, endsym, sepsym)
+end
 
-get_vocab(bpe::GenericBPE{String}, v) = get_vocab!(bpe, Dict{String, Int}(), v)
-get_vocab!(bpe::GenericBPE{String}, vocab::Dict{String, Int}, vfile::AbstractString) = open(io->get_vocab!(bpe, vocab, io), vfile)
-function get_vocab!(bpe::GenericBPE{String}, vocab::Dict{String, Int}, io::IO)
-  for line in  eachline(io)
-    tokens = preprocess(bpe, line)
-    for token in tokens
-      vocab[intern(token)] = get(vocab, token, 0) + 1
+"""
+    count_words(bper::BPELearner, files::AbstractVector)
+
+Given a list of files (where each line of the file would be considered as a (multi-sentences) document).
+  Tokenize those file a count the occurence of each word token.
+"""
+count_words(bper::BPELearner, files::AbstractVector) = foldl(mergewith!(+), map(Base.Fix1(count_words, bper), files); init = Dict{String, Int}())
+count_words(bper::BPELearner, file::AbstractString) = open(Base.Fix1(count_words, bper), file)
+function count_words(bper::BPELearner, io::IO)
+    word_counts = Dict{String, Int}()
+    for line in eachline(io)
+        count_words!(bper, word_counts, line)
     end
-  end
-  return vocab
+    return word_counts
 end
 
-"add a new file to learner"
-add!(bper::BPELearner, vfile::String) = get_vocab!(bper.bpe, bper.vocabs, vfile)
-
-function add!(bper::BPELearner, vocab::Dict{String, Int})
-  for (k, v) in vocab
-    bper.vocabs[k] = get(bper.vocabs, k, 0) + v
-  end
-  bper.vocabs
-end
-
-"learn a BPE map"
-function learn!(bper::BPELearner)
-  empty!(bper.bpe)
-  stats = Statistic(bper)
-  for i ∈ 1:bper.merge
-    mfp = most_freq(stats)
-    get_freq(stats, mfp) < bper.min_freq && break
-    merge_pair!(stats, mfp)
-    bper.bpe.merging_rank[Tuple(mfp)] = i
-  end
-  return bper.bpe
-end
-
-function emit(bper::BPELearner)
-  m = Vector{Tuple{String, String}}(undef, length(bper.bpe))
-  for (bigram, rank) in bper.bpe.merging_rank
-    m[rank] = bigram
-  end
-  return m
-end
-
-"emit the BPE map to ofile; can add one-line comment to the header(first line)"
-function emit(bper::BPELearner, ofile::AbstractString; comment::String = "")
-  @assert '\n' ∉ comment && '\r' ∉ comment
-  open(ofile, "w+") do fo
-    write(fo, ":$comment#endsym:$(bper.bpe.endsym)\n")
-    for (f, s) ∈ emit(bper)
-      write(fo, f, " ", s, "\n")
+count_words!(bper::BPELearner, word_counts, line::AbstractString) = count_words!(bper, word_counts, Document(line))
+function count_words!(bper::BPELearner, word_counts, input::TextEncodeBase.TokenStages)
+    for token in Iterators.map(String ∘ getvalue, bper.tokenizer(input))
+        word_counts[token] = get(word_counts, token, 0) + 1
     end
-  end
-  return ofile
+    return word_counts
 end
 
-function Base.show(io::IO, bper::BPELearner)
-  print(io, "BPELearner(bpe = ")
-  show(io, bper.bpe)
-  print(io, ", merge = ", bper.merge)
-  print(io, ", min_freq = ", bper.min_freq)
-  print(io, ")")
+(bper::BPELearner)(word_counts, n_merge; cached = true) = bper(argmax, word_counts, n_merge; cached)
+function (bper::BPELearner)(f, word_counts, n_merge; cached = true)
+    rank = learn(f, word_counts, n_merge, bper.endsym, bper.min_freq)
+    bpe = BPE(rank; sepsym = bper.sepsym, endsym = bper.endsym)
+    cached && (bpe = CachedBPE(bpe))
+    return replace(TextEncodeBase.tokenization(bper.tokenizer)) do x
+        if x isa BPETokenization && x.bpe isa NoBPE
+            return BPETokenization(x.base, bpe)
+        else
+            return x
+        end
+    end
 end
