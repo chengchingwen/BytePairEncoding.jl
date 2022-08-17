@@ -1,4 +1,4 @@
-using BytePairEncoding: read_merges
+using BytePairEncoding: read_merges, CachedBPE
 using TextEncodeBase: FlatTokenizer, WordTokenization, Sentence, getvalue
 
 function process_line(tkr, line)
@@ -15,7 +15,7 @@ end
     refile = joinpath(dirname(@__FILE__), "data/corpus.bpe.ref.en")
 
     merges = read_merges(bpefile, "</w>")
-    bpe = BPE(merges; sepsym="@@", endsym = "")
+    bpe = CachedBPE(BPE(merges; sepsym="@@", endsym = ""))
     tkr = FlatTokenizer(BPETokenization(WordTokenization(tokenize = _python_whitespace_tokenizer), bpe))
 
     open(refile) do fr
