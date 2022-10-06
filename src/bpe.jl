@@ -44,7 +44,7 @@ end
 Base.show(io::IO, bpe::CachedBPE) = (print(io, "CachedBPE("); show(io, bpe.bpe); print(io, ')'))
 
 
-_bigram(ms, i) where T = @inbounds ms[i], ms[i+1]
+_bigram(ms, i) = @inbounds ms[i], ms[i+1]
 
 function lowestrank(merging_rank, ms)
   m0 = _bigram(ms, 1)

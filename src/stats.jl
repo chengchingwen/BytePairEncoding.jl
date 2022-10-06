@@ -41,7 +41,7 @@ function Statistic(word_counts::Dict{String, Int}, endsym)
 end
 
 # convert string into list of character units for later merging
-bpe_units(x::AbstractString, endsym) where T = as_string.(merges(x, endsym), nothing, endsym)
+bpe_units(x::AbstractString, endsym) = as_string.(merges(x, endsym), nothing, endsym)
 
 # find adjacent element. return a list of Pair, if only length one, return []
 bi_pairs(t) = map(Base.splat(=>), zip(t, Iterators.drop(t, 1)))
