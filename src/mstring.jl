@@ -1,13 +1,16 @@
+using DoubleArrayTries: StringView
+
 struct Merge
     string::String
     offset::UInt16
     ncodeunits::UInt16
     extra::Bool
+    byte::Bool
 end
 
-Merge(str, offset::Int, ncodeunits::Int, extra) = Merge(str, UInt16(offset), UInt16(ncodeunits), extra)
-Merge(a::Merge, e::Bool) = Merge(a.string, a.offset, a.ncodeunits, e)
-Merge(s::SubString, e::Bool = false) = Merge(s.string, s.offset, s.ncodeunits, e)
+Merge(str, offset::Int, ncodeunits::Int, extra, byte = false) = Merge(str, UInt16(offset), UInt16(ncodeunits), extra, byte)
+Merge(a::Merge, e::Bool) = Merge(a.string, a.offset, a.ncodeunits, e, a.byte)
+Merge(s::SubString, e::Bool = false) = Merge(s.string, s.offset, s.ncodeunits, e, false)
 Merge(s::String, e::Bool = false) = Merge(SubString(s), e)
 
 function Merge(a::Merge, b::Merge)
@@ -22,7 +25,7 @@ function Merge(a::Merge, b::Merge)
       error("merge two Merge at same offset: partial string?")
     end
     nunits = a.ncodeunits + b.ncodeunits
-    return Merge(a.string, offset, nunits, b.extra)
+    return Merge(a.string, offset, nunits, b.extra, a.byte & b.byte)
   else
     error("merge different Merge")
   end
@@ -92,7 +95,7 @@ function write_merges(io::IO, rank, endsym = nothing; limit = typemax(Int), comm
 end
 
 function Base.hash(m::Merge, h::UInt)
-    h = hash(m.extra, h) + Base.memhash_seed
+    h = hash(m.byte, hash(m.extra, h)) + Base.memhash_seed
     str_size = m.ncodeunits * sizeof(UInt8)
     str = m.string
     ptr = convert(Ptr{UInt8}, pointer(str)) + m.offset
@@ -103,6 +106,7 @@ function Base.:(==)(m1::Merge, m2::Merge)
     m1.extra == m2.extra || return false
     s = m1.ncodeunits
     s == m2.ncodeunits || return false
+    m1.byte == m2.byte || return false
     str1 = m1.string
     str2 = m2.string
     p1 = convert(Ptr{UInt8}, pointer(str1)) + m1.offset
@@ -113,7 +117,13 @@ end
 function as_string(m::Merge, sepsym, endsym)
     str = m.string
     offset = m.offset
-    s = SubString(str, offset+1, prevind(str, offset + m.ncodeunits + 1))
+    cu = codeunits(str)
+    range = offset+1:offset+m.ncodeunits
+    if m.byte
+        s = join(("<0x$(uppercase(string(cu[i]; base=16, pad=2)))>" for i in range))
+    else
+        s = StringView(@view(cu[range]))
+    end
     sym = m.extra ? endsym : sepsym
     return isnothing(sym) ? String(s) : string(s, sym)
 end

@@ -10,7 +10,7 @@ end
 BPE(merging_rank::Dict; sepsym = nothing, endsym = nothing) = BPE(merging_rank, sepsym, endsym)
 BPE(bpefile; sepsym = nothing, endsym = nothing, kws...) = BPE(read_merges(bpefile, endsym; kws...); sepsym, endsym)
 
-(bpe::BPE)(x) = bytepairencode(x, bpe.merging_rank, bpe.sepsym, bpe.endsym)
+(bpe::BPE)(x) = bytepairencode(bpe, x)
 
 function Base.show(io::IO, bpe::BPE)
     print(io, "BPE(")
@@ -101,20 +101,21 @@ function merge!(ms, i)
     return @inbounds @view(ms[1:desidx])
 end
 
-function merges(x::AbstractString, endsym = nothing)
-  buf = map(Merge, graphemes(x))
-  if endsym !== nothing
-    @inbounds buf[end] = Merge(buf[end], true)
-  end
-  return buf
-end
-
-function bytepairencode(x, merging_rank, sepsym = nothing, endsym = nothing)
-    ms = merges(x, endsym)
-    if length(ms) < 2
-        y = [Merge(x, !isnothing(endsym))]
-    else
-        y = merge_loop!(merging_rank, ms, x)
+function merges(x::AbstractString, endsym::Union{Nothing, AbstractString} = nothing)
+    buf = map(Merge, graphemes(x))
+    if endsym !== nothing
+        @inbounds buf[end] = Merge(buf[end], true)
     end
-    return as_string.(y, sepsym, endsym)
+    return buf
+end
+merges(bpe::AbstractBPE, x::AbstractString) = merges(x, bpe.endsym)
+
+function bytepairencode(bpe::AbstractBPE, x::AbstractString)
+    ms = merges(bpe, x)
+    if length(ms) < 2
+        y = [Merge(x, !isnothing(bpe.endsym))]
+    else
+        y = merge_loop!(bpe.merging_rank, ms, x)
+    end
+    return as_string.(y, bpe.sepsym, bpe.endsym)
 end
