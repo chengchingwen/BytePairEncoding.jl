@@ -24,7 +24,8 @@ struct Statistic
 end
 
 function Statistic(word_counts::Dict{String, Int}, endsym)
-    vocab = Dict{Vector, Int}((bpe_units(word, endsym), freq) for (word, freq) ∈ pairs(word_counts))
+    _bpe = BPE(Dict(); endsym = endsym)
+    vocab = Dict{Vector, Int}((bpe_units(_bpe, word), freq) for (word, freq) ∈ pairs(word_counts))
     vkeys = collect(keys(vocab))
     pair_freq = Dict{Pair{String, String}, Int}()
     pair_index = Dict{Pair{String, String}, Vector{Int}}()
@@ -41,7 +42,7 @@ function Statistic(word_counts::Dict{String, Int}, endsym)
 end
 
 # convert string into list of character units for later merging
-bpe_units(x::AbstractString, endsym) = as_string.(merges(x, endsym), nothing, endsym)
+bpe_units(_bpe, x::AbstractString) = as_string.(first.(merges(_bpe, x)), nothing, _bpe.endsym)
 
 # find adjacent element. return a list of Pair, if only length one, return []
 bi_pairs(t) = map(Base.splat(=>), zip(t, Iterators.drop(t, 1)))

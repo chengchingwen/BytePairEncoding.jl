@@ -22,26 +22,50 @@ function Base.show(io::IO, bpe::ByteFallbackBPE)
     print(io, ')')
 end
 
-function merges(bpe::ByteFallbackBPE, x::AbstractString)
-    vocab = bpe.vocab
-    y = Vector{Merge}()
-    offset = 0
-    for c in split(x, "")
-        i = DoubleArrayTries.lookup(vocab, c)
-        nu = ncodeunits(c)
-        if iszero(i)
-            cu = codeunits(c)
-            for i = 1:nu
-                push!(y, Merge(x, offset, 1, false, true))
-                offset += 1
-            end
-        else
-            push!(y, Merge(x, offset, nu, false))
-            offset += nu
-        end
-    end
-    if bpe.endsym !== nothing
-        @inbounds y[end] = Merge(y[end], true)
-    end
-    return y
+struct ByteUnitsIterator
+    vocab::DoubleArrayTrie
+    string::SubString{String}
 end
+ByteUnitsIterator(vocab::DoubleArrayTrie, str::String) =
+    ByteUnitsIterator(vocab, SubString(str))
+ByteUnitsIterator(vocab::DoubleArrayTrie, str::AbstractString) =
+    ByteUnitsIterator(vocab, String(str))
+Base.eltype(::Type{ByteUnitsIterator}) = Merge
+Base.IteratorSize(::Type{ByteUnitsIterator}) = Base.SizeUnknown()
+
+function Base.iterate(itr::ByteUnitsIterator)
+    offset = itr.string.offset
+    return iterate(itr, (offset, 1, 1))
+end
+function Base.iterate(itr::ByteUnitsIterator, state)
+    # Main.@bp
+    str = itr.string
+    len = str.ncodeunits
+    offset, nu, bid = state
+    offset >= len && return nothing
+    start = offset + 1
+    if isone(bid)
+        stop = nextind(str, start) - 1
+        char = @inbounds view(codeunits(str), start:stop)
+        nu = stop - offset
+        vocab = itr.vocab
+        i = DoubleArrayTries.lookup(vocab, char)
+        isbyte = iszero(i)
+        if isbyte
+            unit = Merge(str, offset, 1, false, true)
+            nextoffset = start
+            nextbid = bid == nu ? 1 : bid + 1
+        else
+            unit = Merge(str, offset, nu, false, false)
+            nextoffset = offset + nu
+            nextbid = 1
+        end
+    else
+        unit = Merge(str, offset, 1, false, true)
+        nextoffset = start
+        nextbid = bid == nu ? 1 : bid + 1
+    end
+    return unit, (nextoffset, nu, nextbid)
+end
+
+units_itr(bpe::ByteFallbackBPE, x) = ByteUnitsIterator(bpe.vocab, x)

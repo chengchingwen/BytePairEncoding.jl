@@ -2,16 +2,16 @@ using DoubleArrayTries: StringView
 
 struct Merge
     string::String
-    offset::UInt16
+    offset::UInt32
     ncodeunits::UInt16
     extra::Bool
     byte::Bool
 end
 
-Merge(str, offset::Int, ncodeunits::Int, extra, byte = false) = Merge(str, UInt16(offset), UInt16(ncodeunits), extra, byte)
+Merge(str, offset::Int, ncodeunits::Int, extra, byte = false) = Merge(str, UInt32(offset), UInt16(ncodeunits), extra, byte)
 Merge(a::Merge, e::Bool) = Merge(a.string, a.offset, a.ncodeunits, e, a.byte)
-Merge(s::SubString, e::Bool = false) = Merge(s.string, s.offset, s.ncodeunits, e, false)
-Merge(s::String, e::Bool = false) = Merge(SubString(s), e)
+Merge(s::SubString, e::Bool = false, byte::Bool = false) = Merge(s.string, s.offset, s.ncodeunits, e, byte)
+Merge(s::String, e::Bool = false, byte::Bool = false) = Merge(s, 0, ncodeunits(s), e, byte)
 
 function Merge(a::Merge, b::Merge)
   if a.string === b.string
@@ -122,7 +122,7 @@ function as_string(m::Merge, sepsym, endsym)
     if m.byte
         s = join(("<0x$(uppercase(string(cu[i]; base=16, pad=2)))>" for i in range))
     else
-        s = StringView(@view(cu[range]))
+        s = StringView(@inbounds @view(cu[range]))
     end
     sym = m.extra ? endsym : sepsym
     return isnothing(sym) ? String(s) : string(s, sym)
