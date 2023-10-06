@@ -1,3 +1,6 @@
+using Artifacts
+using TextEncodeBase
+
 # function bytes_to_unicode()
 #   cs = vcat(collect(('!'):('~')), collect(('¡'):('¬')), collect(('®'):('ÿ')))
 #   bs = map(Int, cs)
@@ -21,4 +24,22 @@ gpt2_codemap() = CodeMap(Pair[0:32=>256:288, 127:160=>289:322, 173=>323])
 function gpt2_tokenizer(text)
   pattern = r"'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"
   return map(x->String(x.match), eachmatch(pattern, text))
+end
+
+function load_gpt2()
+    ENDOFTEXT = "<|endoftext|>"
+    artifact_dir = artifact"gpt2"
+    path = joinpath(artifact_dir, "vocab.bpe")
+    bpe = BPE(path)
+    base_tkr = GPT2Tokenization()
+    matches = [ENDOFTEXT]
+    tkr = TextEncodeBase.FlatTokenizer(
+        TextEncodeBase.MatchTokenization(
+            TextEncodeBase.CodeNormalizer(
+                BPETokenization(base_tkr, bpe),
+                gpt2_codemap()),
+            matches
+        )
+    )
+    return tkr
 end
