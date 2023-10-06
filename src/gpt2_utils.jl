@@ -1,4 +1,4 @@
-using Artifacts
+using Artifacts, LazyArtifacts
 using TextEncodeBase
 
 # function bytes_to_unicode()

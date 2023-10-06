@@ -38,7 +38,6 @@ function Base.iterate(itr::ByteUnitsIterator)
     return iterate(itr, (offset, 1, 1))
 end
 function Base.iterate(itr::ByteUnitsIterator, state)
-    # Main.@bp
     str = itr.string
     len = str.ncodeunits
     offset, nu, bid = state
