@@ -1,0 +1,39 @@
+[cl100k_base]
+git-tree-sha1 = "a2c91b0a5daf9ea7bb2cdf77ab9fa15d4359a6cd"
+lazy = true
+
+    [[cl100k_base.download]]
+    sha256 = "740f8d96af2dbe385ad9b4134771fc4c960d699dea2346ce60fb6174e064fcc1"
+    url = "https://gist.github.com/chengchingwen/5b5d72f9f0863008bb50f457f506f1f7/raw/a2c91b0a5daf9ea7bb2cdf77ab9fa15d4359a6cd.tar.gz"
+
+[gpt2]
+git-tree-sha1 = "de3ac756f1ed860391cd123771f154d3c58fa0fc"
+lazy = true
+
+    [[gpt2.download]]
+    sha256 = "7f03d8a9999a3c69e84f0f031ba511b9e785edce39e1a854e7c864437c96a816"
+    url = "https://gist.github.com/chengchingwen/6ceded526bc1fecd55474cf8364c94fd/raw/de3ac756f1ed860391cd123771f154d3c58fa0fc.tar.gz"
+
+[p50k_base]
+git-tree-sha1 = "514eaf67879c714ae1bf33e8949ab59932d3b7fc"
+lazy = true
+
+    [[p50k_base.download]]
+    sha256 = "6f6259e8905facbc067c3f97ece9a05748a7be0168d633b3d43bbb09a0e981f9"
+    url = "https://gist.github.com/chengchingwen/c4a15090139457390c00278d38e29318/raw/514eaf67879c714ae1bf33e8949ab59932d3b7fc.tar.gz"
+
+[p50k_edit]
+git-tree-sha1 = "636cc6241565724b6ca50221f07c432ba9e9a451"
+lazy = true
+
+    [[p50k_edit.download]]
+    sha256 = "4a1b83a50b17e096b385159489ffcd1f1f7a2d54eb8be00b1b67616f811c10e1"
+    url = "https://gist.github.com/chengchingwen/5fe7aec1fffd346467f92a59d65c411c/raw/636cc6241565724b6ca50221f07c432ba9e9a451.tar.gz"
+
+[r50k_base]
+git-tree-sha1 = "d489e06f7a919292cc62d320c2a4fb4dc33ad260"
+lazy = true
+
+    [[r50k_base.download]]
+    sha256 = "17eed7f24af763ae4d8ea063486ef06de69acacaffabacc5493fbaf1c42b71f2"
+    url = "https://gist.github.com/chengchingwen/a20828bf3c92cf891b0bd785430cba18/raw/d489e06f7a919292cc62d320c2a4fb4dc33ad260.tar.gz"
