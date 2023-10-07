@@ -1,0 +1,10 @@
+[deps]
+Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
+CondaPkg = "992eb4ea-22a4-4c89-a5bb-47a3300528ab"
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+LazyArtifacts = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TextEncodeBase = "f92c20c0-9f2a-4705-8116-881385faba05"
+

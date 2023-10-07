@@ -1,3 +1,10 @@
+using CondaPkg
+testproj_dir = dirname(Base.load_path()[1])
+cp(joinpath(@__DIR__, "CondaPkg.toml"), joinpath(testproj_dir, "CondaPkg.toml"))
+
+using Artifacts, LazyArtifacts
+const artifact_dir = @artifact_str("xnli_dev", nothing, joinpath(@__DIR__, "Artifacts.toml"))
+
 using BytePairEncoding
 using TextEncodeBase
 using Test
@@ -13,6 +20,7 @@ tests = [
     "learn",
     "bpe",
     "bbpe",
+    "tiktoken",
 ]
 
 @testset "BytePairEncoding" begin
