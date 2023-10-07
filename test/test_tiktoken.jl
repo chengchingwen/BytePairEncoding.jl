@@ -17,6 +17,7 @@ using TextEncodeBase: Sentence, getvalue
     )
         tkr = load_tiktoken(model)
         tkr2 = tiktoken2bbpe(tkr, codemap)
+        @test tkr.tokenization.base.bpe.encoder == bbpe2tiktoken(tkr2).tokenization.base.bpe.encoder
         pytkr = tiktoken.get_encoding(model)
         for line in xnli
             tokens = map(getvalue, tkr(Sentence(line)))
@@ -32,6 +33,8 @@ using TextEncodeBase: Sentence, getvalue
         tkr = load_gpt2()
         unmap = TextEncodeBase.CodeUnMap(tkr.tokenization.base.codemap)
         tkr2 = bbpe2tiktoken(tkr)
+        @test tkr.tokenization.base.base.bpe.merging_rank ==
+            tiktoken2bbpe(tkr2, codemap).tokenization.base.base.bpe.merging_rank
         pytkr = tiktoken.get_encoding("gpt2")
         for line in xnli
             tokens = map(unmap ∘ getvalue, tkr(Sentence(line)))

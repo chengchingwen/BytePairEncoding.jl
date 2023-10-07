@@ -107,6 +107,7 @@ function tiktoken2bbpe(_bpe::TikTokenBPE, codemap::Union{CodeMap, Nothing} = not
     encoder = _bpe.encoder
     bpe = TikToken2BBPE(_bpe, Ref(0))
     ranks = Dict{NTuple{2, Merge}, Int}()
+    offset = count(isone ∘ length, keys(encoder)) - 1
     for (token, rank) in encoder
         len = length(token)
         isone(len) && continue
@@ -116,7 +117,7 @@ function tiktoken2bbpe(_bpe::TikTokenBPE, codemap::Union{CodeMap, Nothing} = not
         if !isnothing(codemap)
             merged = codemap.(merged)
         end
-        ranks[parse_merge(Tuple(merged), nothing)] = rank
+        ranks[parse_merge(Tuple(merged), nothing)] = rank - offset
     end
     return BPE(ranks)
 end
@@ -140,8 +141,9 @@ end
 function bbpe2tiktoken(bpe::BPE, codemap::Union{CodeMap, Nothing} = nothing)
     @assert all(isnothing, (bpe.endsym, bpe.sepsym)) "Cannot convert bpe with `sepsym` or `endsym`"
     unmap = isnothing(codemap) ? identity : TextEncodeBase.CodeUnMap(codemap)
-    encoder = Dict(UInt8[b] => i for (i, (_, b)) in enumerate(sort((!isprint(c), c) for c in Char(0):Char(2^8-1))))
-    offset = length(encoder)
+    chars = sort((!isprint(c) || c == ' ' || c == '\ua0' #= python not printable =#, c) for c in Char(0):Char(2^8-1))
+    encoder = Dict(UInt8[b] => i-1 for (i, (_, b)) in enumerate(chars))
+    offset = length(encoder) - 1
     for (merges, rank) in bpe.merging_rank
         bytes = vcat(codeunits(unmap(merges[1].string)), codeunits(unmap(merges[2].string)))
         encoder[bytes] = offset + rank
