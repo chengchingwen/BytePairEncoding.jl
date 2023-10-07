@@ -26,11 +26,16 @@ function gpt2_tokenizer(text)
   return map(x->String(x.match), eachmatch(pattern, text))
 end
 
+load_gpt2_bpe() = BPE(joinpath(artifact"gpt2", "vocab.bpe"))
+
+"""
+    load_gpt2()
+
+Load gpt2 tokenizer.
+"""
 function load_gpt2()
     ENDOFTEXT = "<|endoftext|>"
-    artifact_dir = artifact"gpt2"
-    path = joinpath(artifact_dir, "vocab.bpe")
-    bpe = BPE(path)
+    bpe = load_gpt2_bpe()
     base_tkr = GPT2Tokenization()
     matches = [ENDOFTEXT]
     tkr = TextEncodeBase.FlatTokenizer(
