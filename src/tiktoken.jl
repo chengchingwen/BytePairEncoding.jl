@@ -97,12 +97,13 @@ Base.getproperty(bpe::TikToken2BBPE, sym::Symbol) = sym == :endsym || sym == :se
 
 function tiktoken2bbpe(tkr, codemap::Union{CodeMap, Nothing} = nothing)
     found = Ref(false)
-    return replace(tkr) do x
+    return TextEncodeBase.StructWalk.postwalk(TextEncodeBase.TokenizerStyle(), tkr) do x
         x isa BPETokenization && found[] && !isnothing(codemap) && return CodeNormalizer(x, codemap)
-        x isa TikTokenBPE && (found[] = true) && return tiktoken2bbpe(x, codemap)
+        x isa Union{TikTokenBPE, CachedBPE{TikTokenBPE}} && (found[] = true) && return tiktoken2bbpe(x, codemap)
         return x
     end
 end
+tiktoken2bbpe(bpe::CachedBPE, codemap::Union{CodeMap, Nothing} = nothing) = CachedBPE(tiktoken2bbpe(bpe.bpe, codemap))
 function tiktoken2bbpe(_bpe::TikTokenBPE, codemap::Union{CodeMap, Nothing} = nothing)
     encoder = _bpe.encoder
     bpe = TikToken2BBPE(_bpe, Ref(0))
@@ -132,12 +133,13 @@ function bbpe2tiktoken(tkr)
 end
 function bbpe2tiktoken(tkr, codemap::Union{CodeMap, Nothing})
     found = Ref(false)
-    return replace(tkr) do x
-        x isa CodeNormalizer && !isnothing(codemap) && return x.base
-        x isa BPE && (found[] = true) && return bbpe2tiktoken(x, codemap)
+    return TextEncodeBase.StructWalk.postwalk(TextEncodeBase.TokenizerStyle(), tkr) do x
+        x isa CodeNormalizer && found[] && !isnothing(codemap) && return x.base
+        x isa Union{BPE, CachedBPE{BPE}} && (found[] = true) && return bbpe2tiktoken(x, codemap)
         return x
     end
 end
+bbpe2tiktoken(bpe::CachedBPE, codemap::Union{CodeMap, Nothing} = nothing) = CachedBPE(bbpe2tiktoken(bpe.bpe, codemap))
 function bbpe2tiktoken(bpe::BPE, codemap::Union{CodeMap, Nothing} = nothing)
     @assert all(isnothing, (bpe.endsym, bpe.sepsym)) "Cannot convert bpe with `sepsym` or `endsym`"
     unmap = isnothing(codemap) ? identity : TextEncodeBase.CodeUnMap(codemap)
