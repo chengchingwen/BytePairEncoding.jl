@@ -68,3 +68,26 @@ function Base.iterate(itr::ByteUnitsIterator, state)
 end
 
 units_itr(bpe::ByteFallbackBPE, x) = ByteUnitsIterator(bpe.vocab, x)
+
+function isfallback(str::AbstractString)
+    m = match(r"<0x([0-9A-F]{2})>", str)
+    if !isnothing(m)
+        c = parse(UInt8, m.captures[]; base = 16)
+        return (true, c)
+    else
+        return (false, 0x0)
+    end
+end
+
+function fallback2byte(io::IO, str::AbstractString)
+    isbyte, byte = isfallback(str)
+    isbyte ? write(io, byte) : write(io, str)
+end
+function fallback2byte(str::AbstractString)
+    isbyte, byte = isfallback(str)
+    if isbyte
+        return String([byte])
+    else
+        return String(str)
+    end
+end
