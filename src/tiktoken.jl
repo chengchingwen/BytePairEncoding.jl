@@ -48,7 +48,7 @@ function load_tiktoken(name)
             matches = [ENDOFTEXT]
         end
     end
-    tkr = TextEncodeBase.FlatTokenizer(
+    tkr = BPETokenizer(
         TextEncodeBase.MatchTokenization(
             BPETokenization(base_tkr, bpe), matches
         )
@@ -143,7 +143,7 @@ bbpe2tiktoken(bpe::CachedBPE, codemap::Union{CodeMap, Nothing} = nothing) = Cach
 function bbpe2tiktoken(bpe::BPE, codemap::Union{CodeMap, Nothing} = nothing)
     @assert all(isnothing, (bpe.endsym, bpe.sepsym)) "Cannot convert bpe with `sepsym` or `endsym`"
     unmap = isnothing(codemap) ? identity : TextEncodeBase.CodeUnMap(codemap)
-    chars = sort((!isprint(c) || c == ' ' || c == '\ua0' #= python not printable =#, c) for c in Char(0):Char(2^8-1))
+    chars = sort!([(!isprint(c) || c == ' ' || c == '\ua0' #= python not printable =#, c) for c in Char(0):Char(2^8-1)])
     encoder = Dict(UInt8[b] => i-1 for (i, (_, b)) in enumerate(chars))
     offset = length(encoder) - 1
     for (merges, rank) in bpe.merging_rank

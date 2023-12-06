@@ -38,7 +38,7 @@ function load_gpt2()
     bpe = load_gpt2_bpe()
     base_tkr = GPT2Tokenization()
     matches = [ENDOFTEXT]
-    tkr = TextEncodeBase.FlatTokenizer(
+    tkr = BPETokenizer(
         TextEncodeBase.MatchTokenization(
             TextEncodeBase.CodeNormalizer(
                 BPETokenization(base_tkr, bpe),

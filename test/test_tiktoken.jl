@@ -3,7 +3,6 @@ using PythonCall
 const tiktoken = pyimport("tiktoken")
 
 using BytePairEncoding: load_tiktoken, load_gpt2, tiktoken2bbpe, bbpe2tiktoken, gpt2_codemap
-using TextEncodeBase: Sentence, getvalue
 
 @testset "TikToken" begin
     codemap = gpt2_codemap()
@@ -20,10 +19,10 @@ using TextEncodeBase: Sentence, getvalue
         @test tkr.tokenization.base.bpe.encoder == bbpe2tiktoken(tkr2).tokenization.base.bpe.encoder
         pytkr = tiktoken.get_encoding(model)
         for line in xnli
-            tokens = map(getvalue, tkr(Sentence(line)))
+            tokens = tkr(line)
             @test join(tokens) == line
             @test tokens == map(py->pyconvert(Base.CodeUnits, py).s, pytkr.decode_single_token_bytes.(pytkr.encode(line)))
-            tokens2 = map(unmap ∘ getvalue, tkr2(Sentence(line)))
+            tokens2 = map(unmap, tkr2(line))
             @test join(tokens2) == line
             @test tokens == tokens2
         end
@@ -37,10 +36,10 @@ using TextEncodeBase: Sentence, getvalue
             tiktoken2bbpe(tkr2, codemap).tokenization.base.base.bpe.merging_rank
         pytkr = tiktoken.get_encoding("gpt2")
         for line in xnli
-            tokens = map(unmap ∘ getvalue, tkr(Sentence(line)))
+            tokens = map(unmap, tkr(line))
             @test join(tokens) == line
             @test tokens == map(py->pyconvert(Base.CodeUnits, py).s, pytkr.decode_single_token_bytes.(pytkr.encode(line)))
-            tokens2 = map(getvalue, tkr2(Sentence(line)))
+            tokens2 = tkr2(line)
             @test join(tokens2) == line
             @test tokens == tokens2
         end
