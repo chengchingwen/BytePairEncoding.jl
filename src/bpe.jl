@@ -1,3 +1,4 @@
+using LRUCache
 using Unicode
 using DataStructures
 
@@ -28,19 +29,14 @@ struct NoBPE <: AbstractBPE end
 
 Base.show(io::IO, bpe::NoBPE) = print(io, "NoBPE()")
 
-struct CachedBPE{B <: AbstractBPE, D <: AbstractDict{String, Vector{String}}} <: AbstractBPE
+struct CachedBPE{B <: AbstractBPE, D <: AbstractDict{<:AbstractString, Vector{String}}} <: AbstractBPE
     bpe::B
     cache::D
 end
 
-CachedBPE(bpe::AbstractBPE) = CachedBPE(bpe, Dict{String, Vector{String}}())
+CachedBPE(bpe::AbstractBPE) = CachedBPE(bpe, LRU{AbstractString, Vector{String}}(; maxsize = 1000))
 
-function (bpe::CachedBPE)(x)
-    haskey(bpe.cache, x) && return bpe.cache[x]
-    y = bpe.bpe(x)
-    bpe.cache[x] = y
-    return y
-end
+(bpe::CachedBPE)(x) = get!(()->bpe.bpe(x), bpe.cache, x)
 
 Base.show(io::IO, bpe::CachedBPE) = (print(io, "CachedBPE("); show(io, bpe.bpe); print(io, ')'))
 
