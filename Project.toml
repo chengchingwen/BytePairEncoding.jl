@@ -1,7 +1,7 @@
 name = "BytePairEncoding"
 uuid = "a4280ba5-8788-555a-8ca8-4a8c3d966a71"
 authors = ["chengchingwen <adgjl5645@hotmail.com>"]
-version = "0.5.0"
+version = "0.5.1"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
