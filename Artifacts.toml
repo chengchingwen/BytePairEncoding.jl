@@ -37,3 +37,11 @@ lazy = true
     [[r50k_base.download]]
     sha256 = "17eed7f24af763ae4d8ea063486ef06de69acacaffabacc5493fbaf1c42b71f2"
     url = "https://gist.github.com/chengchingwen/a20828bf3c92cf891b0bd785430cba18/raw/d489e06f7a919292cc62d320c2a4fb4dc33ad260.tar.gz"
+
+[o200k_base]
+git-tree-sha1 = "4b8d2e0b1932c6c8730479d7e0169fb6a30dd1cf"
+lazy = true
+
+    [[o200k_base.download]]
+    sha256 = "a1b8dfddf785c91470a935a87e9c7e269ed85777f208656fcedf225a75114e3b"
+    url = "https://gist.github.com/chengchingwen/25b3dbc47ab68ecc7d04624bec0d018a/raw/4b8d2e0b1932c6c8730479d7e0169fb6a30dd1cf.tar.gz"

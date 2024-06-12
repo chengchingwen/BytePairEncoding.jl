@@ -7,6 +7,9 @@ using TextEncodeBase: AbstractTokenizer,
 struct GPT2Tokenization <: BaseTokenization end
 TextEncodeBase.splitting(::GPT2Tokenization, s::SentenceStage) = gpt2_tokenizer(getvalue(s))
 
+struct O200kBaseTokenization <: BaseTokenization end
+TextEncodeBase.splitting(::O200kBaseTokenization, s::SentenceStage) = o200k_base_tokenizer(getvalue(s))
+
 struct Cl100kBaseTokenization <: BaseTokenization end
 TextEncodeBase.splitting(::Cl100kBaseTokenization, s::SentenceStage) = cl100k_base_tokenizer(getvalue(s))
 

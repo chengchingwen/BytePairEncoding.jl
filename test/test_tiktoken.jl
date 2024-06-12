@@ -8,6 +8,7 @@ using BytePairEncoding: load_tiktoken, load_gpt2, tiktoken2bbpe, bbpe2tiktoken, 
     codemap = gpt2_codemap()
     unmap = TextEncodeBase.CodeUnMap(codemap)
     for model in (
+        "o200k_base",
         "cl100k_base",
         "p50k_base",
         "p50k_edit",
@@ -21,7 +22,8 @@ using BytePairEncoding: load_tiktoken, load_gpt2, tiktoken2bbpe, bbpe2tiktoken, 
         for line in xnli
             tokens = tkr(line)
             @test join(tokens) == line
-            @test tokens == map(py->pyconvert(Base.CodeUnits, py).s, pytkr.decode_single_token_bytes.(pytkr.encode(line)))
+            @test tokens == map(py->pyconvert(Base.CodeUnits, py).s,
+                                pytkr.decode_single_token_bytes.(pyconvert(Array{Int}, pytkr.encode(line))))
             tokens2 = map(unmap, tkr2(line))
             @test join(tokens2) == line
             @test tokens == tokens2
@@ -38,7 +40,8 @@ using BytePairEncoding: load_tiktoken, load_gpt2, tiktoken2bbpe, bbpe2tiktoken, 
         for line in xnli
             tokens = map(unmap, tkr(line))
             @test join(tokens) == line
-            @test tokens == map(py->pyconvert(Base.CodeUnits, py).s, pytkr.decode_single_token_bytes.(pytkr.encode(line)))
+            @test tokens == map(py->pyconvert(Base.CodeUnits, py).s,
+                                pytkr.decode_single_token_bytes.(pyconvert(Array{Int}, pytkr.encode(line))))
             tokens2 = tkr2(line)
             @test join(tokens2) == line
             @test tokens == tokens2
