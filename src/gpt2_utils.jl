@@ -20,12 +20,6 @@ using TextEncodeBase
 "the codemap used by openai gpt2"
 gpt2_codemap() = CodeMap(Pair[0:32=>256:288, 127:160=>289:322, 173=>323])
 
-"the tokenizer used by openai gpt2"
-function gpt2_tokenizer(text)
-  pattern = r"'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"
-  return map(x->String(x.match), eachmatch(pattern, text))
-end
-
 load_gpt2_bpe() = BPE(joinpath(artifact"gpt2", "vocab.bpe"))
 
 """

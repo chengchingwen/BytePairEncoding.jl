@@ -1,9 +1,16 @@
 using Artifacts, LazyArtifacts
 using Base64
 using TextEncodeBase
+using TextEncodeBase: DATLookupDict
+using DoubleArrayTries
 using DoubleArrayTries: StringView
 
-_load_tiktoken_encoder_dict(path) = Dict((((token, rank) = split(line); base64decode(token) => parse(Int, rank)) for line in readlines(path)))
+function _load_tiktoken_encoder_dict(path)
+    Dict(
+        (((token, rank) = split(line); base64decode(token) => parse(Int, rank))
+         for line in readlines(path))
+    )
+end
 _load_tiktoken_encoder(path) = TikTokenBPE(_load_tiktoken_encoder_dict(path))
 
 function load_tiktoken_bpe(name)
@@ -16,21 +23,25 @@ function load_tiktoken_bpe(name)
     return _load_tiktoken_encoder(path)
 end
 
-function o200k_base_tokenizer(text)
-    # https://github.com/openai/tiktoken/blob/c0ba74c238d18b4824c25f3c27fc8698055b9a76/tiktoken_ext/openai_public.py#L101-L111
-    pattern = r"[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]*[\p{Ll}\p{Lm}\p{Lo}\p{M}]+(?i:'s|'t|'re|'ve|'m|'ll|'d)?|[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]+[\p{Ll}\p{Lm}\p{Lo}\p{M}]*(?i:'s|'t|'re|'ve|'m|'ll|'d)?|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n/]*|\s*[\r\n]+|\s+(?!\S)|\s+"
-    return map(x->String(x.match), eachmatch(pattern, text))
-end
-function cl100k_base_tokenizer(text)
-    pattern = r"(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+(?!\S)|\s+"
-    return map(x->String(x.match), eachmatch(pattern, text))
-end
-
 """
     load_tiktoken(name)
 
 Load tiktoken tokenizer. `name` can be `"o200k_base"`, `"cl100k_base"`, `"p50k_base"`, `"p50k_base"`,
  `"r50k_base"`, or `"gpt2"`.
+
+```julia-repl
+julia> tkr = BytePairEncoding.load_tiktoken("cl100k_base")
+BPETokenizer(MatchTokenization(BPETokenization(Cl100kBaseTokenization, bpe = TikTokenBPE(100256 merges)), 5 patterns))
+
+julia> tkr("hello world aaaaaaaaaaaa")
+5-element Vector{String}:
+ "hello"
+ " world"
+ " a"
+ "aaaaaaaa"
+ "aaa"
+
+```
 """
 function load_tiktoken(name)
     ENDOFTEXT = "<|endoftext|>"
@@ -66,7 +77,22 @@ function load_tiktoken(name)
 end
 
 struct TikTokenBPE <: AbstractBPE
-    encoder::Dict{Vector{UInt8}, Int}
+    encoder::DATLookupDict
+    function TikTokenBPE(encoder::Dict{Vector{UInt8}, Int})
+        words = sort!(collect((StringView(k) for k in keys(encoder))))
+        trie = DoubleArrayTrie(words)
+        # assuming rank range = 0:n-1 and set rank+1 as idx
+        # Unfortunately, there might be gaps in the ranks, so set rank2uid with the largest value
+        uid2rank = Vector{Int}(undef, length(trie))
+        rank2uid = zeros(Int, maximum(values(encoder)) + 1)
+        for word in words
+            rank = encoder[word.data] + 1
+            uid = TextEncodeBase.lookup(trie, word)
+            uid2rank[uid] = rank
+            rank2uid[rank] = uid
+        end
+        return new(DATLookupDict(trie, DoubleArrayTries.CVector(uid2rank), DoubleArrayTries.CVector(rank2uid)))
+    end
 end
 (bpe::TikTokenBPE)(x) = bytepairencode(bpe, x)
 
@@ -87,8 +113,8 @@ units_itr(bpe::TikTokenBPE, x) = Iterators.map(i->Merge(x, i-1, 1, false, false)
 
 function getrank(bpe::TikTokenBPE, m)
     m = Merge(m...)
-    r = get(bpe.encoder, @inbounds(@view(codeunits(m.string)[m.offset .+ (1:m.ncodeunits)])), typemax(Int))
-    return r
+    r = get(bpe.encoder, @inbounds(@view(codeunits(m.string)[m.offset .+ (1:m.ncodeunits)])), nothing)
+    return isnothing(r) ? typemax(Int) : r - 1
 end
 
 # converter
@@ -117,12 +143,13 @@ function tiktoken2bbpe(_bpe::TikTokenBPE, codemap::Union{CodeMap, Nothing} = not
     encoder = _bpe.encoder
     bpe = TikToken2BBPE(_bpe, Ref(0))
     ranks = Dict{NTuple{2, Merge}, Int}()
-    offset = count(isone ∘ length, keys(encoder)) - 1
-    for (token, rank) in encoder
-        len = length(token)
+    offset = count(isone ∘ ncodeunits, keys(encoder)) - 1
+    for (token, rank1) in encoder
+        rank = rank1 - 1
+        len = ncodeunits(token)
         isone(len) && continue
         bpe.max_rank[] = rank
-        merged = Tuple(bpe(StringView(token)))
+        merged = Tuple(bpe(token))
         @assert length(merged) == 2
         if !isnothing(codemap)
             merged = codemap.(merged)

@@ -2,16 +2,17 @@ using DataStructures: MutableLinkedList
 using TextEncodeBase
 using TextEncodeBase: AbstractTokenizer,
     AbstractTokenization, BaseTokenization, WordNormalizer, DefaultTokenization, WrappedTokenization, Splittable,
-    ParentStages, TokenStages, TokenStage, SentenceStage, WordStage, getvalue, CodeNormalizer
+    ParentStages, TokenStages, TokenStage, SentenceStage, WordStage, getvalue, CodeNormalizer, FindAllIterator
 
+# TODO: Should we use TextEncodeBase.EachMatchTokenization ?
 struct GPT2Tokenization <: BaseTokenization end
-TextEncodeBase.splitting(::GPT2Tokenization, s::SentenceStage) = gpt2_tokenizer(getvalue(s))
-
-struct O200kBaseTokenization <: BaseTokenization end
-TextEncodeBase.splitting(::O200kBaseTokenization, s::SentenceStage) = o200k_base_tokenizer(getvalue(s))
+TextEncodeBase.splitting(::GPT2Tokenization, s::SentenceStage) = FindAllIterator(gpt2_regex(), getvalue(s))
 
 struct Cl100kBaseTokenization <: BaseTokenization end
-TextEncodeBase.splitting(::Cl100kBaseTokenization, s::SentenceStage) = cl100k_base_tokenizer(getvalue(s))
+TextEncodeBase.splitting(::Cl100kBaseTokenization, s::SentenceStage) = FindAllIterator(cl100k_base_regex(), getvalue(s))
+
+struct O200kBaseTokenization <: BaseTokenization end
+TextEncodeBase.splitting(::O200kBaseTokenization, s::SentenceStage) = FindAllIterator(o200k_base_regex(), getvalue(s))
 
 struct BPETokenization{T <: AbstractTokenization, B <: AbstractBPE} <: WrappedTokenization{T}
     base::T
