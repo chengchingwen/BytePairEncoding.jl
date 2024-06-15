@@ -2,7 +2,7 @@ const xnli = readlines(joinpath(artifact_dir, "xnli-dev.txt"))
 using PythonCall
 const tiktoken = pyimport("tiktoken")
 
-using BytePairEncoding: load_tiktoken, load_gpt2, tiktoken2bbpe, bbpe2tiktoken, gpt2_codemap
+using BytePairEncoding: load_tiktoken_encoder, load_tiktoken, load_gpt2, tiktoken2bbpe, bbpe2tiktoken, gpt2_codemap
 
 @testset "TikToken" begin
     codemap = gpt2_codemap()
@@ -15,11 +15,14 @@ using BytePairEncoding: load_tiktoken, load_gpt2, tiktoken2bbpe, bbpe2tiktoken, 
         "r50k_base",
         "gpt2",
     )
-        tkr = load_tiktoken(model)
+        enc = load_tiktoken_encoder(model)
+        tkr = enc.tokenizer
         tkr2 = tiktoken2bbpe(tkr, codemap)
-        @test tkr.tokenization.base.bpe.encoder == bbpe2tiktoken(tkr2).tokenization.base.bpe.encoder
+        @test collect(tkr.tokenization.base.bpe.encoder) == collect(bbpe2tiktoken(tkr2).tokenization.base.bpe.encoder)
         pytkr = tiktoken.get_encoding(model)
         for line in xnli
+            @test enc(line) == pyconvert(Array{Int}, pytkr.encode(line)) .+ 1
+            @test enc.decode(enc(line)) == line
             tokens = tkr(line)
             @test join(tokens) == line
             @test tokens == map(py->pyconvert(Base.CodeUnits, py).s,

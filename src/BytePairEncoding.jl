@@ -14,5 +14,6 @@ include("tokenization.jl")
 include("learn.jl")
 include("gpt2_utils.jl")
 include("tiktoken.jl")
+include("encoder.jl")
 
 end # module

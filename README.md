@@ -36,4 +36,21 @@ julia> tkr2("hello world aaaaaaaaaaaa")
  "aaaa"
  "aaa"
 
+julia> enc = BytePairEncoding.load_tiktoken_encoder("cl100k_base")
+┌ Warning: The maximum encoded value (`length(BPEEncoder.vocab)`) is larger than the number of possible tokens
+│ because there are some "gaps" in the vocabulary. Be carefull if used to initialize embedding table.
+└ @ BytePairEncodin
+BPEEncoder(BPETokenizer(MatchTokenization(BPETokenization(Cl100kBaseTokenization, bpe = TikTokenBPE(100256 merges)), 5 patterns)), Vocab(size = 100277))
+
+julia> enc.encode("hello world aaaaaaaaaaaa") # === enc(...)
+5-element Vector{Int64}:
+ 15340
+  1918
+   265
+ 70541
+ 33747
+
+julia> enc.decode(enc("hello world aaaaaaaaaaaa"))
+"hello world aaaaaaaaaaaa"
+
 ```
