@@ -39,7 +39,7 @@ end
 julia> enc = BytePairEncoding.load_tiktoken_encoder("cl100k_base")
 ┌ Warning: The maximum encoded value (`length(BPEEncoder.vocab)`) is larger than the number of possible tokens
 │ because there are some "gaps" in the vocabulary. Be carefull if used to initialize embedding table.
-└ @ BytePairEncodin
+└ @ BytePairEncoding
 BPEEncoder(BPETokenizer(MatchTokenization(BPETokenization(Cl100kBaseTokenization, bpe = TikTokenBPE(100256 merges)), 5 patterns)), Vocab(size = 100277))
 
 julia> enc.encode("hello world aaaaaaaaaaaa") # === enc(...)
