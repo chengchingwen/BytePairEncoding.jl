@@ -95,8 +95,9 @@ function write_merges(io::IO, rank, endsym = nothing; limit = typemax(Int), comm
 end
 
 function Base.hash(m::Merge, h::UInt)
-    str1 = SubString(m.string, m.offset + 1, m.offset + 1 + m.ncodeunits)
-    return hash(str1, hash(m.byte, hash(m.extra, h)))
+    str = m.string
+    str = SubString(str, m.offset + 1, prevind(str, m.offset + 1 + m.ncodeunits))
+    return hash(str, hash(m.byte, hash(m.extra, h)))
 end
 
 function Base.:(==)(m1::Merge, m2::Merge)
@@ -104,8 +105,10 @@ function Base.:(==)(m1::Merge, m2::Merge)
     s = m1.ncodeunits
     s == m2.ncodeunits || return false
     m1.byte == m2.byte || return false
-    str1 = SubString(m1.string, m1.offset + 1, m2.offset + 1 + s)
-    str2 = SubString(m2.string, m2.offset + 1, m2.offset + 1 + s)
+    str1 = m1.string
+    str2 = m2.string
+    str1 = SubString(str1, m1.offset + 1, prevind(str1, m1.offset + 1 + s))
+    str2 = SubString(str2, m2.offset + 1, prevind(str2, m2.offset + 1 + s))
     return str1 == str2
 end
 
