@@ -14,7 +14,7 @@ Merge(s::SubString, e::Bool = false, byte::Bool = false) = Merge(s.string, s.off
 Merge(s::String, e::Bool = false, byte::Bool = false) = Merge(s, 0, ncodeunits(s), e, byte)
 
 function Merge(a::Merge, b::Merge)
-  if a.string === b.string
+  if a.string == b.string
     if a.offset < b.offset
       offset = a.offset
       @assert offset + a.ncodeunits == b.offset "merge un-adjacent Merge"
@@ -95,11 +95,8 @@ function write_merges(io::IO, rank, endsym = nothing; limit = typemax(Int), comm
 end
 
 function Base.hash(m::Merge, h::UInt)
-    h = hash(m.byte, hash(m.extra, h)) + Base.memhash_seed
-    str_size = m.ncodeunits * sizeof(UInt8)
-    str = m.string
-    ptr = convert(Ptr{UInt8}, pointer(str)) + m.offset
-    return GC.@preserve str ccall(Base.memhash, UInt, (Ptr{UInt8}, Csize_t, UInt32), ptr, str_size, h % UInt32) + h
+    str1 = SubString(m.string, m.offset + 1, m.offset + 1 + m.ncodeunits)
+    return hash(str1, hash(m.byte, hash(m.extra, h)))
 end
 
 function Base.:(==)(m1::Merge, m2::Merge)
@@ -107,11 +104,9 @@ function Base.:(==)(m1::Merge, m2::Merge)
     s = m1.ncodeunits
     s == m2.ncodeunits || return false
     m1.byte == m2.byte || return false
-    str1 = m1.string
-    str2 = m2.string
-    p1 = convert(Ptr{UInt8}, pointer(str1)) + m1.offset
-    p2 = convert(Ptr{UInt8}, pointer(str2)) + m2.offset
-    return GC.@preserve str1 str2 0 == Base._memcmp(p1, p2, s * sizeof(UInt8))
+    str1 = SubString(m1.string, m1.offset + 1, m2.offset + 1 + s)
+    str2 = SubString(m2.string, m2.offset + 1, m2.offset + 1 + s)
+    return str1 == str2
 end
 
 function as_string(m::Merge, sepsym, endsym)
