@@ -21,6 +21,7 @@ tests = [
     "bpe",
     "bbpe",
     "tiktoken",
+    "bbpe_encoder",
 ]
 
 @testset "BytePairEncoding" begin
