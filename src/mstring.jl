@@ -94,12 +94,11 @@ function write_merges(io::IO, rank, endsym = nothing; limit = typemax(Int), comm
     return
 end
 
+# Hash of the code units only (as `==`), through public API: `Base.memhash`
+# and `Base.memhash_seed` are internals that Julia 1.13 removed.
 function Base.hash(m::Merge, h::UInt)
-    h = hash(m.byte, hash(m.extra, h)) + Base.memhash_seed
-    str_size = m.ncodeunits * sizeof(UInt8)
-    str = m.string
-    ptr = convert(Ptr{UInt8}, pointer(str)) + m.offset
-    return GC.@preserve str ccall(Base.memhash, UInt, (Ptr{UInt8}, Csize_t, UInt32), ptr, str_size, h % UInt32) + h
+    h = hash(m.byte, hash(m.extra, h))
+    return hash(@view(codeunits(m.string)[m.offset+1:m.offset+m.ncodeunits]), h)
 end
 
 function Base.:(==)(m1::Merge, m2::Merge)
